@@ -9,6 +9,7 @@ import * as storage from './storage.js';
 import * as noteManager from './noteManager.js';
 import * as ui from './ui.js';
 import * as themes from './themes.js';
+import * as sharing from './sharing.js';
 
 // ============================================================================
 // Shared auth helpers
@@ -300,6 +301,50 @@ function initResetPasswordPage() {
 }
 
 // ============================================================================
+// Shared-note page (shared-note.html) — a read-only view reachable with no
+// login, since the note's data lives entirely in the link (see sharing.js).
+// ============================================================================
+
+function initSharedNotePage() {
+  themes.applySavedPreferences();
+
+  const view = document.getElementById('shared-note-view');
+  const missing = document.getElementById('shared-note-missing');
+
+  const note = sharing.decodeShareLink(window.location.hash);
+  if (!note) {
+    missing.hidden = false;
+    return;
+  }
+
+  document.getElementById('shared-note-title').textContent = note.title;
+
+  const tagsEl = document.getElementById('shared-note-tags');
+  note.tags.forEach((tag) => {
+    const li = document.createElement('li');
+    li.className = 'shared-note-tag';
+    li.textContent = tag;
+    tagsEl.appendChild(li);
+  });
+
+  document.getElementById('shared-note-meta').textContent = note.sharedAt
+    ? `Shared on ${new Date(note.sharedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}`
+    : '';
+
+  // Safe to set directly: decodeShareLink() already ran `content` through the
+  // same rich-text allow-list sanitizer notes are saved with.
+  const contentEl = document.getElementById('shared-note-content');
+  if (note.content.trim()) {
+    contentEl.innerHTML = note.content;
+  } else {
+    contentEl.textContent = 'This note has no content.';
+    contentEl.classList.add('shared-note-content-empty');
+  }
+
+  view.hidden = false;
+}
+
+// ============================================================================
 // Notes app (index.html)
 // ============================================================================
 
@@ -337,9 +382,15 @@ function initNotesApp() {
   const locationDisplay = document.getElementById('location-display');
 
   const actionsPanel = document.getElementById('actions-panel');
+  const shareNoteBtn = document.getElementById('share-note-btn');
   const archiveNoteBtn = document.getElementById('archive-note-btn');
   const archiveNoteLabel = document.getElementById('archive-note-label');
   const deleteNoteBtn = document.getElementById('delete-note-btn');
+
+  const shareModal = document.getElementById('share-modal');
+  const shareLinkInput = document.getElementById('share-link-input');
+  const shareCopyBtn = document.getElementById('share-copy-btn');
+  const shareCloseBtn = document.getElementById('share-close-btn');
 
   const confirmModal = document.getElementById('confirm-modal');
   const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
@@ -374,6 +425,7 @@ function initNotesApp() {
   const mobileTabbar = document.getElementById('mobile-tabbar');
   const mobileDetailBackBtn = document.getElementById('mobile-detail-back-btn');
   const mobileDetailToolbarIcons = document.getElementById('mobile-detail-toolbar-icons');
+  const mobileShareBtn = document.getElementById('mobile-share-btn');
   const mobileDeleteBtn = document.getElementById('mobile-delete-btn');
   const mobileArchiveBtn = document.getElementById('mobile-archive-btn');
   const mobileCancelBtn = document.getElementById('mobile-cancel-btn');
@@ -856,6 +908,62 @@ function initNotesApp() {
   mobileArchiveBtn.addEventListener('click', archiveSelectedNote);
   mobileDeleteBtn.addEventListener('click', deleteSelectedNote);
 
+  const shareCopyBtnDefaultLabel = shareCopyBtn.innerHTML;
+  let copyResetTimeout = null;
+
+  function resetCopyButton() {
+    clearTimeout(copyResetTimeout);
+    shareCopyBtn.innerHTML = shareCopyBtnDefaultLabel;
+  }
+
+  function flashCopied() {
+    clearTimeout(copyResetTimeout);
+    shareCopyBtn.innerHTML = '<svg aria-hidden="true"><use href="#icon-check" /></svg> Copied!';
+    copyResetTimeout = setTimeout(resetCopyButton, 1500);
+  }
+
+  function openShareModal() {
+    if (!state.selectedId) return;
+    const note = noteManager.getNotes().find((n) => n.id === state.selectedId);
+    if (!note) return;
+    resetCopyButton();
+    shareLinkInput.value = sharing.buildShareLink(note);
+    shareModal.showModal();
+    shareLinkInput.focus();
+    shareLinkInput.select();
+  }
+
+  shareNoteBtn.addEventListener('click', openShareModal);
+  mobileShareBtn.addEventListener('click', openShareModal);
+  shareCloseBtn.addEventListener('click', () => shareModal.close());
+
+  /** Clipboard API needs a secure context (https/localhost); execCommand still
+   * works in most desktop browsers over plain http, so it's worth a try before
+   * falling back to "select it yourself". */
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(shareLinkInput.value);
+      return true;
+    } catch {
+      shareLinkInput.select();
+      try {
+        return document.execCommand('copy');
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  shareCopyBtn.addEventListener('click', async () => {
+    if (await copyShareLink()) {
+      flashCopied();
+      ui.showFeedback('Share link copied to clipboard!');
+    } else {
+      shareLinkInput.select();
+      ui.showFeedback("Couldn't copy automatically — the link is selected, so press Ctrl+C.", { type: 'error' });
+    }
+  });
+
   function openDeleteConfirm(note) {
     state.pendingDeleteId = note.id;
     confirmBodyText.textContent = `"${note.title}" will be permanently deleted. This can't be undone.`;
@@ -1257,6 +1365,7 @@ if (document.getElementById('app')) {
     case 'signup': initSignupPage(); break;
     case 'forgot-password': initForgotPasswordPage(); break;
     case 'reset-password': initResetPasswordPage(); break;
+    case 'shared-note': initSharedNotePage(); break;
     default: break;
   }
 }

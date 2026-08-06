@@ -1265,6 +1265,27 @@ dialog::backdrop {
   gap: 10px;
 }
 
+.share-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--ink);
+  padding: 0 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.share-link-row input:focus-visible {
+  border-color: var(--focus-ring);
+}
+
 /* ==========================================================================
    Responsive
    ========================================================================== */
@@ -1802,6 +1823,73 @@ dialog::backdrop {
 
 .auth-footer a:hover {
   color: var(--accent-ink);
+}
+
+/* ==========================================================================
+   Shared note page (shared-note.html) — a read-only view of one note,
+   reachable with no login, reusing the auth-card shell above.
+   ========================================================================== */
+
+.shared-note-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.shared-note-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.shared-note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.shared-note-tag {
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  text-transform: capitalize;
+}
+
+.shared-note-meta {
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+  margin: -8px 0 16px;
+}
+
+.shared-note-content {
+  color: var(--ink);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.shared-note-content ul,
+.shared-note-content ol {
+  margin: 0 0 0 1.2em;
+}
+
+.shared-note-content-empty {
+  color: var(--ink-faint);
+  font-style: italic;
 }
 
 .auth-back-link {

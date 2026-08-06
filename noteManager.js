@@ -69,7 +69,7 @@ function normalizeTags(tags) {
 // HTML came from.
 const ALLOWED_RICH_TEXT_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'UL', 'OL', 'LI']);
 
-function sanitizeRichText(html) {
+export function sanitizeRichText(html) {
   if (!html) return '';
   const container = document.createElement('div');
   container.innerHTML = html;
