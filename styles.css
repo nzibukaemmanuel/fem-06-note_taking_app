@@ -1104,6 +1104,13 @@ mark {
   color: #fff;
 }
 
+.format-toolbar-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  margin: 2px 2px;
+}
+
 .rich-content {
   border: none;
   background: transparent;
@@ -1118,6 +1125,16 @@ mark {
 .rich-content:empty::before {
   content: attr(data-placeholder);
   color: var(--ink-faint);
+}
+
+.rich-content ul,
+.rich-content ol {
+  margin: 0.4em 0;
+  padding-left: 1.4em;
+}
+
+.rich-content li {
+  margin: 0.15em 0;
 }
 
 .field-error {

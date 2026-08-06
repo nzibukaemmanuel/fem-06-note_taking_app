@@ -94,6 +94,17 @@
   <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h3.879a1.5 1.5 0 0 1 1.06.44L11.5 6.5H18.5A1.5 1.5 0 0 1 20 8v9.5A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-11Z" />
   </symbol>
+  <symbol id="icon-list-bullet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="4.5" cy="6" r="1" fill="currentColor" stroke="none" /><path d="M9 6h11" />
+    <circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none" /><path d="M9 12h11" />
+    <circle cx="4.5" cy="18" r="1" fill="currentColor" stroke="none" /><path d="M9 18h11" />
+  </symbol>
+  <symbol id="icon-list-numbered" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 6h11" /><path d="M9 12h11" /><path d="M9 18h11" />
+    <text x="1.5" y="8" font-size="6" fill="currentColor" stroke="none" font-family="sans-serif">1</text>
+    <text x="1.5" y="14" font-size="6" fill="currentColor" stroke="none" font-family="sans-serif">2</text>
+    <text x="1.5" y="20" font-size="6" fill="currentColor" stroke="none" font-family="sans-serif">3</text>
+  </symbol>
 </svg>
 
 <div class="app" id="app">
@@ -261,6 +272,13 @@
           <button type="button" class="format-btn" data-command="bold" aria-label="Bold" aria-pressed="false"><strong>B</strong></button>
           <button type="button" class="format-btn" data-command="italic" aria-label="Italic" aria-pressed="false"><em>I</em></button>
           <button type="button" class="format-btn" data-command="underline" aria-label="Underline" aria-pressed="false"><u>U</u></button>
+          <span class="format-toolbar-divider" aria-hidden="true"></span>
+          <button type="button" class="format-btn" data-command="insertUnorderedList" aria-label="Bulleted list" aria-pressed="false">
+            <svg aria-hidden="true"><use href="#icon-list-bullet" /></svg>
+          </button>
+          <button type="button" class="format-btn" data-command="insertOrderedList" aria-label="Numbered list" aria-pressed="false">
+            <svg aria-hidden="true"><use href="#icon-list-numbered" /></svg>
+          </button>
         </div>
         <div id="note-content" class="rich-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" data-placeholder="Write something worth remembering…"></div>
       </div>

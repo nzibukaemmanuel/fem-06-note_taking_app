@@ -62,12 +62,12 @@ function normalizeTags(tags) {
   return [...new Set(cleaned)];
 }
 
-// Only what the Bold/Italic/Underline toolbar can produce is allowed to
-// survive — everything else (script tags, event-handler attributes, pasted
-// styles) is stripped. This runs on every write path (create, update,
-// import), so a note's content can never carry more than these tags no
-// matter where the HTML came from.
-const ALLOWED_RICH_TEXT_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR']);
+// Only what the formatting toolbar can produce is allowed to survive —
+// everything else (script tags, event-handler attributes, pasted styles) is
+// stripped. This runs on every write path (create, update, import), so a
+// note's content can never carry more than these tags no matter where the
+// HTML came from.
+const ALLOWED_RICH_TEXT_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'UL', 'OL', 'LI']);
 
 function sanitizeRichText(html) {
   if (!html) return '';
