@@ -313,6 +313,8 @@ function initNotesApp() {
   const tagListEl = document.getElementById('tag-list');
   const filterButtons = document.querySelectorAll('.filter-btn[data-filter]');
   const exportNotesBtn = document.getElementById('export-notes-btn');
+  const importNotesBtn = document.getElementById('import-notes-btn');
+  const importNotesInput = document.getElementById('import-notes-input');
 
   const newNoteBtn = document.getElementById('new-note-btn');
   const noteForm = document.getElementById('note-form');
@@ -900,6 +902,27 @@ function initNotesApp() {
     link.click();
     URL.revokeObjectURL(url);
     ui.showFeedback('Notes exported successfully!');
+  });
+
+  importNotesBtn.addEventListener('click', () => importNotesInput.click());
+  importNotesInput.addEventListener('change', async () => {
+    const file = importNotesInput.files[0];
+    if (!file) return;
+
+    try {
+      const parsed = JSON.parse(await file.text());
+      const count = noteManager.importNotes(parsed);
+      if (count === 0) {
+        ui.showFeedback('No valid notes found in that file.', { type: 'error' });
+      } else {
+        ui.showFeedback(`Imported ${count} note${count === 1 ? '' : 's'} successfully!`);
+        render();
+      }
+    } catch (err) {
+      ui.showFeedback("Couldn't import that file — make sure it's a valid notes JSON export.", { type: 'error' });
+    } finally {
+      importNotesInput.value = '';
+    }
   });
 
   [tagListEl, mobileTagList].forEach((list) => {

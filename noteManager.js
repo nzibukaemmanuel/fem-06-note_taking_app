@@ -202,6 +202,36 @@ export const toggleArchive = (id) => {
   return updated;
 };
 
+/**
+ * Adds notes parsed from an imported JSON file to the existing collection
+ * (rather than replacing it). Each entry gets a fresh id/order so imported
+ * notes can never collide with — or overwrite — what's already saved.
+ * Entries without a usable title are skipped. Returns how many were added.
+ */
+export const importNotes = (rawNotes) => {
+  if (!Array.isArray(rawNotes)) {
+    throw new Error('That file doesn\'t contain a list of notes.');
+  }
+
+  let nextOrder = notes.reduce((max, n) => Math.max(max, n.order ?? 0), 0) + 1;
+  const imported = rawNotes.reduce((acc, raw) => {
+    const title = String(raw?.title || '').trim();
+    if (!title) return acc;
+    const note = new Note(title, raw.content, raw.tags);
+    note.archived = Boolean(raw.archived);
+    if (raw.createdAt) note.createdAt = raw.createdAt;
+    if (raw.updatedAt) note.updatedAt = raw.updatedAt;
+    if (raw.location) note.location = raw.location;
+    note.order = nextOrder++;
+    acc.push(note);
+    return acc;
+  }, []);
+
+  notes = [...notes, ...imported];
+  storage.saveNotes(notes);
+  return imported.length;
+};
+
 export const searchNotes = (query, list = notes) => {
   const q = query.trim().toLowerCase();
   if (!q) return list;
