@@ -311,10 +311,13 @@ function initNotesApp() {
   const searchInput = document.getElementById('search-input');
   const notesListEl = document.getElementById('notes-list');
   const tagListEl = document.getElementById('tag-list');
+  const folderListEl = document.getElementById('folder-list');
   const filterButtons = document.querySelectorAll('.filter-btn[data-filter]');
   const exportNotesBtn = document.getElementById('export-notes-btn');
   const importNotesBtn = document.getElementById('import-notes-btn');
   const importNotesInput = document.getElementById('import-notes-input');
+
+  const mobileFolderList = document.getElementById('mobile-folder-list');
 
   const newNoteBtn = document.getElementById('new-note-btn');
   const noteForm = document.getElementById('note-form');
@@ -326,6 +329,7 @@ function initNotesApp() {
   const noteTitleInput = document.getElementById('note-title');
   const noteContentInput = document.getElementById('note-content');
   const noteTagsInput = document.getElementById('note-tags');
+  const noteFolderInput = document.getElementById('note-folder');
   const lastEditedRow = document.getElementById('last-edited-row');
   const lastEditedEl = document.getElementById('note-last-edited');
 
@@ -394,6 +398,7 @@ function initNotesApp() {
   const state = {
     filter: 'all',        // 'all' | 'archived'
     tag: null,             // string | null
+    folder: null,          // string | null
     search: '',
     selectedId: null,      // note id currently shown in the detail panel
     isCreating: false,     // true while composing a brand-new (unsaved) note
@@ -414,6 +419,7 @@ function initNotesApp() {
   function getVisibleNotes() {
     let list = noteManager.filterByArchived(state.filter === 'archived');
     if (state.tag) list = noteManager.filterByTag(state.tag, list);
+    if (state.folder) list = noteManager.filterByFolder(state.folder, list);
     if (state.search) list = noteManager.searchNotes(state.search, list);
     return [...list].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
@@ -421,6 +427,7 @@ function initNotesApp() {
   function emptyMessage() {
     if (state.search) return `No notes match "${state.search}".`;
     if (state.tag) return `No notes tagged ${state.tag} yet.`;
+    if (state.folder) return `No notes in "${state.folder}" yet.`;
     if (state.filter === 'archived') return 'Nothing archived. Notes you archive will land here.';
     return 'Write your first note — it takes less time than finding a pen.';
   }
@@ -433,6 +440,7 @@ function initNotesApp() {
     }
     viewTitle.textContent = state.filter === 'archived' ? 'Archived Notes' : 'All Notes';
     const parts = [];
+    if (state.folder) parts.push(`in ${state.folder}`);
     if (state.tag) parts.push(`tagged ${state.tag}`);
     if (state.search) parts.push(`matching "${state.search}"`);
     viewSubtitle.textContent = parts.join(' · ');
@@ -446,6 +454,7 @@ function initNotesApp() {
       selectedId: state.selectedId,
     });
     ui.updateTagList(noteManager.getAllTags(), state.tag);
+    ui.updateFolderList(noteManager.getFolders(), state.folder);
     ui.toggleArchiveView(state.filter === 'archived');
     updateHeader();
     updateMobileTabbar();
@@ -485,6 +494,7 @@ function initNotesApp() {
     noteTitleInput.value = note.title;
     noteContentInput.value = note.content;
     noteTagsInput.value = note.tags.join(', ');
+    noteFolderInput.value = note.folder || 'UNCATEGORIZED';
     lastEditedRow.hidden = false;
     lastEditedEl.textContent = new Date(note.updatedAt || note.createdAt).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric',
@@ -534,6 +544,7 @@ function initNotesApp() {
 
     noteForm.reset();
     noteIdInput.value = '';
+    noteFolderInput.value = 'UNCATEGORIZED';
     lastEditedRow.hidden = true;
     locationDisplay.textContent = '';
     ui.showValidationError('note-title', '');
@@ -621,9 +632,10 @@ function initNotesApp() {
     const title = noteTitleInput.value.trim();
     const content = noteContentInput.value.trim();
     const tags = noteTagsInput.value;
+    const folder = noteFolderInput.value;
 
     if (state.isCreating) {
-      const note = noteManager.createNote(title, content, tags);
+      const note = noteManager.createNote(title, content, tags, folder);
       if (state.pendingLocation) {
         noteManager.updateNote(note.id, { location: state.pendingLocation });
       }
@@ -631,7 +643,7 @@ function initNotesApp() {
       ui.showFeedback('Note saved successfully!');
       selectNote(noteManager.getNotes().find((n) => n.id === note.id));
     } else if (state.selectedId) {
-      noteManager.updateNote(state.selectedId, { title, content, tags, location: state.pendingLocation });
+      noteManager.updateNote(state.selectedId, { title, content, tags, folder, location: state.pendingLocation });
       ui.showFeedback('Note updated successfully!');
       selectNote(noteManager.getNotes().find((n) => n.id === state.selectedId));
     }
@@ -889,6 +901,14 @@ function initNotesApp() {
     render();
   }
 
+  function selectFolder(folder) {
+    state.folder = state.folder === folder ? null : folder;
+    state.view = 'notes';
+    closeMobileOverlays();
+    setMobileView('list');
+    render();
+  }
+
   filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => selectFilter(btn.dataset.filter));
   });
@@ -946,6 +966,13 @@ function initNotesApp() {
     list.addEventListener('click', (e) => {
       const chip = e.target.closest('.tag-chip');
       if (chip) selectTag(chip.dataset.tag);
+    });
+  });
+
+  [folderListEl, mobileFolderList].forEach((list) => {
+    list.addEventListener('click', (e) => {
+      const chip = e.target.closest('.tag-chip');
+      if (chip) selectFolder(chip.dataset.folderName);
     });
   });
 
@@ -1098,6 +1125,7 @@ function initNotesApp() {
   function openMobileTags() {
     mobileTagsView.hidden = false;
     ui.updateTagList(noteManager.getAllTags(), state.tag, { listEl: mobileTagList });
+    ui.updateFolderList(noteManager.getFolders(), state.folder, { listEl: mobileFolderList });
     updateMobileTabbar();
   }
 
@@ -1157,6 +1185,15 @@ function initNotesApp() {
 
     themes.applySavedPreferences();
     noteManager.init();
+
+    noteFolderInput.innerHTML = '';
+    noteManager.getFolders().forEach((folder) => {
+      const option = document.createElement('option');
+      option.value = folder.name;
+      option.textContent = folder.name;
+      noteFolderInput.appendChild(option);
+    });
+
     setMobileView('list');
     render();
 
