@@ -333,7 +333,13 @@ function initSharedNotePage() {
 
   // Safe to set directly: decodeShareLink() already ran `content` through the
   // same rich-text allow-list sanitizer notes are saved with.
-  document.getElementById('shared-note-content').innerHTML = note.content;
+  const contentEl = document.getElementById('shared-note-content');
+  if (note.content.trim()) {
+    contentEl.innerHTML = note.content;
+  } else {
+    contentEl.textContent = 'This note has no content.';
+    contentEl.classList.add('shared-note-content-empty');
+  }
 
   view.hidden = false;
 }

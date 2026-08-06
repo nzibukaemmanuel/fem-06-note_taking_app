@@ -1830,6 +1830,27 @@ dialog::backdrop {
    reachable with no login, reusing the auth-card shell above.
    ========================================================================== */
 
+.shared-note-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.shared-note-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
 .shared-note-tags {
   display: flex;
   flex-wrap: wrap;
@@ -1864,6 +1885,11 @@ dialog::backdrop {
 .shared-note-content ul,
 .shared-note-content ol {
   margin: 0 0 0 1.2em;
+}
+
+.shared-note-content-empty {
+  color: var(--ink-faint);
+  font-style: italic;
 }
 
 .auth-back-link {

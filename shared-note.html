@@ -14,6 +14,11 @@
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="auth-body" data-auth-page="shared-note">
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+  </symbol>
+</svg>
 <main class="auth-shell">
   <div class="auth-card">
     <div class="auth-brand"><svg class="brand-logo" width="95" height="28" viewBox="0 0 95 28" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Notes">
@@ -30,6 +35,9 @@
 </svg></div>
 
     <div id="shared-note-view" hidden>
+      <p class="shared-note-badge">
+        <svg aria-hidden="true"><use href="#icon-lock" /></svg> Read-only shared note
+      </p>
       <h1 class="auth-title" id="shared-note-title"></h1>
       <ul class="shared-note-tags" id="shared-note-tags" aria-label="Tags"></ul>
       <p class="shared-note-meta" id="shared-note-meta"></p>
