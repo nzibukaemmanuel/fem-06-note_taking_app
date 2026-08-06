@@ -594,6 +594,7 @@ function initNotesApp() {
     if (!state.isCreating) return; // only draft new notes, edits are already persisted
     clearTimeout(draftTimeout);
     draftTimeout = setTimeout(() => {
+      if (!state.isCreating) return; // the note may have been saved while this was pending
       const draft = {
         title: noteTitleInput.value,
         content: noteContentInput.innerHTML,
