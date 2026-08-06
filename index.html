@@ -109,11 +109,19 @@
     <circle cx="6" cy="12" r="2.3" /><circle cx="17.5" cy="6" r="2.3" /><circle cx="17.5" cy="18" r="2.3" />
     <path d="M8.1 10.8 15.4 7.2M8.1 13.2l7.3 3.6" />
   </symbol>
+  <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M2.5 12S5.5 5.5 12 5.5 21.5 12 21.5 12 18.5 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" />
+  </symbol>
+  <symbol id="icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 9.5h3.2L11.5 6v12L7.2 14.5H4Z" stroke-linejoin="round" />
+    <path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11" />
+  </symbol>
 </svg>
 
 <div class="app" id="app">
 
   <aside id="sidebar" class="sidebar scroll-clean">
+    <h1 class="visually-hidden">Notes</h1>
     <div class="brand">
       <svg class="brand-logo" width="95" height="28" viewBox="0 0 95 28" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Notes">
         <g clip-path="url(#clip0_2359_17916)">
@@ -186,7 +194,7 @@
 
   <div class="content">
     <header class="content-header">
-      <h1 id="view-title">All Notes</h1>
+      <h2 id="view-title">All Notes</h2>
       <div class="list-toolbar">
         <form class="search-box" role="search" id="search-form">
           <svg class="search-icon" aria-hidden="true"><use href="#icon-search" /></svg>
@@ -214,7 +222,7 @@
 
         <p class="view-subtitle" id="view-subtitle"></p>
 
-        <ul class="notes-list" id="notes-list" aria-label="Notes"></ul>
+        <ul class="notes-list" id="notes-list" role="listbox" aria-label="Notes"></ul>
 
         <div class="empty-state" id="empty-state" hidden>
           <p class="empty-title">Nothing here yet</p>
@@ -255,13 +263,13 @@
       <div class="detail-meta">
         <div class="meta-row">
           <svg class="meta-icon" aria-hidden="true"><use href="#icon-tag" /></svg>
-          <span class="meta-label">Tags</span>
-          <input type="text" id="note-tags" name="tags" placeholder="Dev, React (comma-separated)" aria-describedby="tags-hint" />
+          <span class="meta-label" id="tags-label">Tags</span>
+          <input type="text" id="note-tags" name="tags" placeholder="Dev, React (comma-separated)" aria-labelledby="tags-label" aria-describedby="tags-hint" />
         </div>
         <div class="meta-row">
           <svg class="meta-icon" aria-hidden="true"><use href="#icon-folder" /></svg>
-          <span class="meta-label">Folder</span>
-          <select id="note-folder" name="folder"></select>
+          <span class="meta-label" id="folder-label">Folder</span>
+          <select id="note-folder" name="folder" aria-labelledby="folder-label"></select>
         </div>
         <div class="meta-row" id="last-edited-row">
           <svg class="meta-icon" aria-hidden="true"><use href="#icon-clock" /></svg>
@@ -286,8 +294,13 @@
           <button type="button" class="format-btn" data-command="insertOrderedList" aria-label="Numbered list" aria-pressed="false">
             <svg aria-hidden="true"><use href="#icon-list-numbered" /></svg>
           </button>
+          <span class="format-toolbar-divider" aria-hidden="true"></span>
+          <button type="button" class="format-btn" id="preview-toggle-btn" aria-label="Preview" aria-pressed="false">
+            <svg aria-hidden="true"><use href="#icon-eye" /></svg>
+          </button>
         </div>
         <div id="note-content" class="rich-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" data-placeholder="Write something worth remembering…"></div>
+        <div id="note-preview" class="rich-content note-preview" aria-label="Content preview" hidden></div>
       </div>
 
       <div class="field location-field">
@@ -323,7 +336,7 @@
         </button>
       </aside>
 
-      <div class="settings-view" id="settings-view" hidden>
+      <div class="settings-view" id="settings-view" role="main" aria-label="Settings" hidden>
         <nav class="settings-subnav scroll-clean" aria-label="Settings sections">
           <button type="button" class="settings-row" id="settings-section-theme-btn" data-section="theme">
             <svg class="settings-row-icon" aria-hidden="true"><use href="#icon-sun" /></svg>
@@ -333,6 +346,11 @@
           <button type="button" class="settings-row" id="settings-section-font-btn" data-section="font">
             <span class="settings-row-icon settings-row-icon-text" aria-hidden="true">Aa</span>
             <span class="settings-row-label">Font Theme</span>
+            <svg class="chevron" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
+          </button>
+          <button type="button" class="settings-row" id="settings-section-sound-btn" data-section="sound">
+            <svg class="settings-row-icon" aria-hidden="true"><use href="#icon-volume" /></svg>
+            <span class="settings-row-label">Sound Effects</span>
             <svg class="chevron" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
           </button>
           <hr class="settings-divider" />
@@ -352,7 +370,7 @@
           </button>
 
           <section class="settings-detail-section" id="settings-detail-theme">
-            <h2>Color Theme</h2>
+            <h3>Color Theme</h3>
             <p class="settings-detail-subtitle">Choose your color theme:</p>
             <div class="theme-options" id="theme-options" role="radiogroup" aria-label="Color theme">
               <button type="button" class="theme-option" data-value="light" role="radio" aria-checked="false">
@@ -371,12 +389,20 @@
                 </span>
                 <span class="theme-option-radio" aria-hidden="true"></span>
               </button>
+              <button type="button" class="theme-option" data-value="auto" role="radio" aria-checked="false">
+                <span class="theme-option-icon theme-option-icon-text" aria-hidden="true">Auto</span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Auto</span>
+                  <span class="theme-option-desc">Match your system's light/dark setting</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
             </div>
             <button type="button" class="btn btn-primary" id="apply-theme-btn" disabled>Apply Changes</button>
           </section>
 
           <section class="settings-detail-section" id="settings-detail-font" hidden>
-            <h2>Font Theme</h2>
+            <h3>Font Theme</h3>
             <p class="settings-detail-subtitle">Choose your font theme:</p>
             <div class="theme-options" id="font-options" role="radiogroup" aria-label="Font theme">
               <button type="button" class="theme-option" data-value="sans" role="radio" aria-checked="false">
@@ -405,6 +431,30 @@
               </button>
             </div>
             <button type="button" class="btn btn-primary" id="apply-font-btn" disabled>Apply Changes</button>
+          </section>
+
+          <section class="settings-detail-section" id="settings-detail-sound" hidden>
+            <h3>Sound Effects</h3>
+            <p class="settings-detail-subtitle">Play a short sound alongside toasts and errors — useful accessibility feedback if you're not looking at the screen:</p>
+            <div class="theme-options" id="sound-options" role="radiogroup" aria-label="Sound effects">
+              <button type="button" class="theme-option" data-value="on" role="radio" aria-checked="false">
+                <span class="theme-option-icon"><svg aria-hidden="true"><use href="#icon-volume" /></svg></span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">On</span>
+                  <span class="theme-option-desc">Play a sound for saves, errors, and other actions</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="theme-option" data-value="off" role="radio" aria-checked="false">
+                <span class="theme-option-icon theme-option-icon-text" aria-hidden="true">Off</span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Off</span>
+                  <span class="theme-option-desc">Stay silent — visual toasts only</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" class="btn btn-primary" id="apply-sound-btn" disabled>Apply Changes</button>
           </section>
         </div>
       </div>
@@ -449,7 +499,7 @@
         <input type="search" id="mobile-search-input" placeholder="Search by title, content, or tags…" autocomplete="off" />
       </form>
     </header>
-    <ul class="notes-list scroll-clean" id="mobile-search-results" aria-label="Search results"></ul>
+    <ul class="notes-list scroll-clean" id="mobile-search-results" role="listbox" aria-label="Search results"></ul>
     <div class="empty-state" id="mobile-search-empty" hidden>
       <p class="empty-title">Search your notes</p>
       <p class="empty-body" id="mobile-search-empty-body">Start typing to search by title, content, or tags.</p>
@@ -518,7 +568,7 @@
 </dialog>
 
 <template id="note-item-template">
-  <li class="note-item" tabindex="0">
+  <li class="note-item" role="option" tabindex="0">
     <h3 class="note-item-title"></h3>
     <span class="note-folder-badge"></span>
     <ul class="note-tags"></ul>

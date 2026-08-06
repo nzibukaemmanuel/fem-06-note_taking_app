@@ -21,7 +21,7 @@ nothing more:
 |---|---|
 | `storage.js` | All `localStorage`/`sessionStorage` reads & writes: notes, preferences, drafts, and (for the demo login system) accounts/session/reset-requests. Only place that touches Web Storage. |
 | `noteManager.js` | `Note` class + in-memory notes array; create/update/delete/search/filter/reorder. Persists via `storage.js` after every mutation. |
-| `ui.js` | Pure rendering: note cards, tag/folder sidebars, the markdown preview renderer, validation messages, toasts. Never touches storage. |
+| `ui.js` | Pure rendering: note cards, tag/folder sidebars, validation messages, toasts (plus their Web Audio sound cues). Never touches storage. |
 | `themes.js` | Applies/persists color theme (light/dark/auto) and font family (sans/serif/mono). |
 | `main.js` | The single entry point every page loads. Detects which page it's on and wires up only that page: the notes app (`index.html`), or one of the four auth pages (login/signup/forgot-password/reset-password). |
 
@@ -46,15 +46,17 @@ another script.
 - **Archive view**: separate "All notes" / "Archived" views with counts; drag a note onto "Archived Notes" / "All Notes" to (un)archive it.
 - **Drag & drop (bonus)**: reorder notes in the list, or drag onto a folder/archive target as above.
 - **Drafts**: while creating a new note, title/content/tags/folder autosave to `sessionStorage` every 300ms and are restored if you reload or reopen the tab; cleared on successful save.
-- **Formatting toolbar + Markdown preview (bonus)**: Bold/Italic/Bulleted list/Numbered list/Link buttons insert lightweight markdown syntax into the note; a "Preview" toggle renders that markdown (safely, HTML-escaped first) instead of full `contenteditable` rich text, so there's one consistent format instead of two competing ones.
+- **Formatting toolbar + Preview (bonus)**: Bold/Italic/Underline/Bulleted list/Numbered list buttons format the note in a live `contenteditable` editor; a "Preview" toggle swaps it for a read-only render of the same content (run through the same allow-list sanitizer used for saving/sharing) so you can check formatting without risking an accidental edit.
 - **Export / Import (bonus)**: export all notes as a `.json` file; import merges a previously-exported file back in without duplicating existing notes.
 - **Note sharing (bonus)**: "Share Note" encodes the note directly into a URL (no server involved) — uses the native share sheet if available, otherwise shows a copyable link. Opening a shared link prompts the recipient to add a read-only copy to their own notes.
-- **Dark mode auto-detection (bonus)**: a new "Auto" theme option (alongside Light/Dark) follows the OS/browser `prefers-color-scheme` setting live; it's also the default for a first-time visitor.
+- **Dark mode auto-detection (bonus)**: an "Auto" theme option (alongside Light/Dark) follows the OS/browser `prefers-color-scheme` setting live; it's also the default for a first-time visitor.
+- **Sound cues (bonus, accessibility)**: a short Web Audio tone plays alongside toasts (success/info vs. error) and new validation errors — useful feedback for anyone not looking at the screen when something happens. Toggle on/off in Settings → Sound Effects; persisted like the theme/font choice.
 - **Offline support (bonus)**: a service worker caches the app shell, so the app (and its `localStorage` data) still opens with no connection.
 - **Geolocation (bonus)**: "Add my location" button uses `navigator.geolocation`, attempts reverse geocoding to a city name (falls back to raw coordinates), and handles permission denial/timeouts gracefully.
 - **Validation**: title required, min 3 characters, inline error message, submit disabled until valid, validates on blur and on submit.
 - **Theme & font system**: light/dark/auto theme and sans/serif/mono font, applied via `data-theme`/`data-font` attributes on `<html>` and persisted.
-- **Accessibility**: semantic landmarks, skip link, visible focus rings, native `<dialog>` for modals (built-in focus trap + Escape-to-close + focus return), `aria-live` regions for toasts and validation, labelled form fields, keyboard-operable everywhere (drag & drop has click-based fallbacks — reorder isn't keyboard-only yet, a good next step).
+- **Accessibility**: 100/100 Lighthouse Accessibility score (and a clean `axe-core` run across the notes list, note editor, Preview mode, and every Settings section). Semantic landmarks (a single page `<h1>`, one `<main>` at a time, `role="listbox"`/`role="option"` on the notes list), a correct heading hierarchy, visible focus rings, native `<dialog>` for modals (built-in focus trap + Escape-to-close + focus return), `aria-live` regions for toasts and validation, every form field has a real accessible name (including the Tags/Folder fields via `aria-labelledby`), keyboard-operable everywhere (drag & drop has click-based fallbacks — reorder isn't keyboard-only yet, a good next step), and sound cues (above) for non-visual feedback.
+- **Color system**: every color in the app is one of a small set of design tokens (`styles.css` `:root`/`[data-theme="dark"]`) built from a Neutral/Blue/Green/Red palette. Real text always uses a tier verified to meet WCAG AA contrast (4.5:1) against its background — a couple of tokens (`--danger-text`, dark-theme `--accent-ink`) are a `color-mix()` derived from the brand color specifically because the literal brand swatch alone doesn't meet that ratio for small text.
 - **Responsive**: CSS grid note layout, collapsible sidebar drawer with scrim on narrow viewports, touch-sized buttons.
 - **Demo accounts (kept from the original build)**: signup/login/forgot-password/reset-password, all client-side only — an "account" is just a SHA-256 password hash in `localStorage`, there's no real backend or email delivery.
 

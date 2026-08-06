@@ -9,23 +9,54 @@
   --font-mono: 'JetBrains Mono', 'Courier New', monospace;
   --font-body: var(--font-sans);
 
-  /* light theme (default) */
-  --bg: #FFFFFF;
-  --bg-alt: #F7F7F9;
-  --surface: #FFFFFF;
-  --surface-raised: #FFFFFF;
-  --ink: #16181D;
-  --ink-soft: #6B7280;
-  --ink-faint: #9CA3AF;
-  --accent: #3B5BFB;
-  --accent-ink: #2E46D9;
-  --accent-2: #C98A2B;
-  --danger: #DC2626;
-  --border: #E7E8EC;
-  --border-soft: #EFF0F3;
-  --tag-bg: #EEF0F4;
-  --tag-ink: #55596B;
-  --focus-ring: #3B5BFB;
+  /* brand palette — primitives, theme-independent (see design handoff) */
+  --neutral-950: #0E121B;
+  --neutral-900: #191B25;
+  --neutral-800: #232530;
+  --neutral-700: #2B303B;
+  --neutral-600: #525866;
+  --neutral-500: #717784;
+  --neutral-400: #99A0AE;
+  --neutral-300: #CACFD8;
+  --neutral-200: #E0E4EA;
+  --neutral-100: #F3F5F8;
+  --neutral-50: #F5F7FA;
+  --neutral-0: #FFFFFF;
+  --blue-700: #2547D0;
+  --blue-500: #335CFF;
+  --blue-50: #EBF1FF;
+  --green-500: #21C16B;
+  --green-100: #D1FBE9;
+  --red-500: #FB3748;
+  --red-100: #FFD5D8;
+
+  /* light theme (default) — semantic tokens mapped from the primitives above */
+  --bg: var(--neutral-0);
+  --bg-alt: var(--neutral-50);
+  --surface: var(--neutral-0);
+  --surface-raised: var(--neutral-0);
+  --ink: var(--neutral-950);
+  /* real secondary text (labels, hints, dates) — ~7:1 on this theme's bg */
+  --ink-soft: var(--neutral-600);
+  /* decorative only: icons, placeholders — not guaranteed to meet 4.5:1 for real text */
+  --ink-faint: var(--neutral-500);
+  --accent: var(--blue-500);
+  /* text-safe accent variant (links, active states) — plain --accent is a fill/large-surface color */
+  --accent-ink: var(--blue-700);
+  --accent-hover-bg: color-mix(in srgb, var(--accent) 85%, black);
+  --danger: var(--red-500);
+  /* text-safe danger variant: --red-500 alone is ~3.66:1 on white, fails 4.5:1 for real text */
+  --danger-text: color-mix(in srgb, var(--red-500) 78%, black);
+  /* text/icon color for solid saturated-fill surfaces (danger/success badges & buttons) — fixed dark ink in both themes */
+  --on-fill: var(--neutral-950);
+  --on-danger: var(--on-fill);
+  --success: var(--green-500);
+  --success-tint: var(--green-100);
+  --border: var(--neutral-200);
+  --border-soft: var(--neutral-100);
+  --tag-bg: var(--neutral-100);
+  --tag-ink: var(--neutral-600);
+  --focus-ring: var(--blue-500);
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 14px rgba(16, 24, 40, 0.06);
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -33,22 +64,29 @@
 }
 
 [data-theme="dark"] {
-  --bg: #14161B;
-  --bg-alt: #1A1D23;
-  --surface: #1D2027;
-  --surface-raised: #23262E;
-  --ink: #ECEDF1;
-  --ink-soft: #A6ABB6;
-  --ink-faint: #6E7480;
-  --accent: #6C87FF;
-  --accent-ink: #B7C3FF;
-  --accent-2: #F0C168;
-  --danger: #F0715A;
-  --border: #2A2D35;
+  --bg: var(--neutral-950);
+  --bg-alt: var(--neutral-900);
+  --surface: var(--neutral-900);
+  --surface-raised: var(--neutral-800);
+  --ink: var(--neutral-100);
+  --ink-soft: var(--neutral-400);
+  --ink-faint: var(--neutral-500);
+  --accent: var(--blue-500);
+  /* literal --blue-500 only hits ~3.4:1 on these dark surfaces — lighten for real text/links */
+  --accent-ink: color-mix(in srgb, var(--blue-500) 62%, white);
+  --accent-hover-bg: color-mix(in srgb, var(--accent) 85%, black);
+  --danger: var(--red-500);
+  /* --red-500 on a near-black bg is already ~5:1 as text, no darkening needed here */
+  --danger-text: var(--red-500);
+  --on-fill: var(--neutral-950);
+  --on-danger: var(--on-fill);
+  --success: var(--green-500);
+  --success-tint: color-mix(in srgb, var(--green-500) 20%, transparent);
+  --border: var(--neutral-700);
   --border-soft: #24272E;
-  --tag-bg: #262A33;
-  --tag-ink: #B7BBC6;
-  --focus-ring: #6C87FF;
+  --tag-bg: var(--neutral-800);
+  --tag-ink: var(--neutral-300);
+  --focus-ring: var(--accent-ink);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 20px rgba(0, 0, 0, 0.35);
 }
 
@@ -203,7 +241,7 @@ svg {
   border-bottom: 1px solid var(--border);
 }
 
-.content-header h1 {
+.content-header h2 {
   font-size: 1.5rem;
   font-weight: 700;
 }
@@ -324,7 +362,7 @@ svg {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   margin: 2px 0 4px;
   padding: 0 10px;
 }
@@ -377,7 +415,7 @@ svg {
 
 .hint {
   font-size: 0.78rem;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   line-height: 1.5;
 }
 
@@ -409,7 +447,7 @@ svg {
 }
 
 .btn-primary:hover {
-  background: var(--accent-ink);
+  background: var(--accent-hover-bg);
 }
 
 .btn-primary:disabled {
@@ -447,7 +485,7 @@ svg {
 }
 
 .btn-outline-danger {
-  color: var(--danger);
+  color: var(--danger-text);
 }
 
 .btn-outline-danger svg {
@@ -456,7 +494,7 @@ svg {
 
 .btn-danger {
   background: var(--danger);
-  color: #fff;
+  color: var(--on-danger);
 }
 
 .btn-link {
@@ -472,7 +510,7 @@ svg {
 }
 
 .btn-link:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* ==========================================================================
@@ -525,7 +563,7 @@ svg {
 }
 
 #search-input::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .icon-btn-square {
@@ -573,12 +611,12 @@ svg {
 
 .settings-row.is-active {
   background: var(--bg-alt);
-  color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 
 .settings-row.is-active .settings-row-icon {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .settings-row-icon {
@@ -736,6 +774,10 @@ svg {
   color: var(--ink-soft);
 }
 
+.theme-option-icon-text {
+  font-size: 0.7rem;
+}
+
 .theme-option-radio {
   flex-shrink: 0;
   width: 18px;
@@ -816,7 +858,7 @@ svg {
   padding: 2px 8px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .note-item .note-tags {
@@ -827,7 +869,7 @@ svg {
 
 .note-item-date {
   font-size: 0.78rem;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .note-tag {
@@ -841,9 +883,13 @@ svg {
 }
 
 mark {
-  background: color-mix(in srgb, var(--accent-2) 45%, transparent);
-  color: inherit;
+  background: var(--blue-50);
+  color: var(--ink);
   border-radius: 2px;
+}
+
+[data-theme="dark"] mark {
+  background: color-mix(in srgb, var(--blue-500) 35%, transparent);
 }
 
 .empty-state {
@@ -913,8 +959,8 @@ mark {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #17B26A;
-  color: #fff;
+  background: var(--success);
+  color: var(--on-fill);
 }
 
 .toast-icon svg {
@@ -924,6 +970,7 @@ mark {
 
 .toast.toast-error .toast-icon {
   background: var(--danger);
+  color: var(--on-fill);
 }
 
 .toast-message {
@@ -936,7 +983,7 @@ mark {
   background: none;
   border: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--accent-ink);
   font: inherit;
   font-weight: 600;
   text-decoration: underline;
@@ -998,7 +1045,7 @@ mark {
 }
 
 .detail-title-input::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .detail-meta {
@@ -1019,7 +1066,7 @@ mark {
 }
 
 .meta-label {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   min-width: 84px;
 }
 
@@ -1033,7 +1080,7 @@ mark {
 }
 
 .meta-row input::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .meta-row select {
@@ -1076,6 +1123,7 @@ mark {
 
 .format-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 4px;
 }
@@ -1104,6 +1152,11 @@ mark {
   color: #fff;
 }
 
+.format-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .format-toolbar-divider {
   width: 1px;
   align-self: stretch;
@@ -1124,7 +1177,7 @@ mark {
 
 .rich-content:empty::before {
   content: attr(data-placeholder);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .rich-content ul,
@@ -1137,9 +1190,18 @@ mark {
   margin: 0.15em 0;
 }
 
+.note-preview {
+  cursor: default;
+}
+
+.note-preview-empty {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
 .field-error {
   font-size: 0.78rem;
-  color: var(--danger);
+  color: var(--danger-text);
   min-height: 1em;
 }
 
@@ -1339,7 +1401,7 @@ dialog::backdrop {
 }
 
 .fab-new-note:hover {
-  background: var(--accent-ink);
+  background: var(--accent-hover-bg);
 }
 
 .fab-new-note svg {
@@ -1370,7 +1432,7 @@ dialog::backdrop {
   background: none;
   padding: 6px 2px;
   border-radius: var(--radius-sm);
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 0.68rem;
   cursor: pointer;
 }
@@ -1381,7 +1443,7 @@ dialog::backdrop {
 }
 
 .tab-btn.is-active {
-  color: var(--accent);
+  color: var(--accent-ink);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
@@ -1454,7 +1516,7 @@ dialog::backdrop {
 }
 
 .mobile-text-btn-primary {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .mobile-view-overlay {
@@ -1708,7 +1770,7 @@ dialog::backdrop {
 }
 
 .auth-form input::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .auth-form input:focus-visible {
@@ -1754,7 +1816,7 @@ dialog::backdrop {
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
 .field-hint .hint-icon {
@@ -1775,14 +1837,14 @@ dialog::backdrop {
 }
 
 .auth-actions-row a:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .auth-divider {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 0.8rem;
   margin: 20px 0 16px;
 }
@@ -1817,7 +1879,7 @@ dialog::backdrop {
 }
 
 .auth-footer a {
-  color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 
@@ -1870,7 +1932,7 @@ dialog::backdrop {
 }
 
 .shared-note-meta {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 0.8rem;
   margin: -8px 0 16px;
 }
@@ -1888,7 +1950,7 @@ dialog::backdrop {
 }
 
 .shared-note-content-empty {
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-style: italic;
 }
 
@@ -1902,7 +1964,7 @@ dialog::backdrop {
 }
 
 .auth-back-link:hover {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .auth-back-link svg {
@@ -1927,7 +1989,7 @@ dialog::backdrop {
 }
 
 .demo-notice a {
-  color: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 

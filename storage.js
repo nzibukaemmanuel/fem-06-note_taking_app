@@ -20,7 +20,7 @@ const RESET_TTL_MS = 15 * 60 * 1000;
 // Bonus: default to 'auto' (follow the OS/browser color-scheme preference)
 // rather than hard-coding light, so a first-time visitor sees the theme
 // their system already prefers. See themes.js for how 'auto' is resolved.
-const DEFAULT_PREFS = { theme: 'auto', font: 'sans' };
+const DEFAULT_PREFS = { theme: 'auto', font: 'sans', soundEnabled: true };
 
 // ---------------------------------------------------------------------------
 // Generic read/write/remove — every function below is a thin, typed wrapper

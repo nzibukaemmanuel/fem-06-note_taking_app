@@ -407,13 +407,17 @@ function initNotesApp() {
   const settingsView = document.getElementById('settings-view');
   const settingsSectionThemeBtn = document.getElementById('settings-section-theme-btn');
   const settingsSectionFontBtn = document.getElementById('settings-section-font-btn');
+  const settingsSectionSoundBtn = document.getElementById('settings-section-sound-btn');
   const settingsBackBtn = document.getElementById('settings-back-btn');
   const settingsDetailTheme = document.getElementById('settings-detail-theme');
   const settingsDetailFont = document.getElementById('settings-detail-font');
+  const settingsDetailSound = document.getElementById('settings-detail-sound');
   const themeOptions = document.getElementById('theme-options');
   const fontOptions = document.getElementById('font-options');
+  const soundOptions = document.getElementById('sound-options');
   const applyThemeBtn = document.getElementById('apply-theme-btn');
   const applyFontBtn = document.getElementById('apply-font-btn');
+  const applySoundBtn = document.getElementById('apply-sound-btn');
   const changePasswordBtn = document.getElementById('change-password-btn');
   const logoutBtn = document.getElementById('logout-btn');
 
@@ -459,9 +463,11 @@ function initNotesApp() {
     pendingArchiveId: null,
     draggedId: null,       // note id currently being dragged (drag & drop bonus)
     view: 'notes',         // 'notes' | 'settings'
-    settingsSection: 'root', // 'root' | 'theme' | 'font' — 'root' only means something on phones
-    pendingTheme: null,    // staged (not-yet-applied) theme/font selection in the Settings view
+    settingsSection: 'root', // 'root' | 'theme' | 'font' | 'sound' — 'root' only means something on phones
+    pendingTheme: null,    // staged (not-yet-applied) theme/font/sound selection in the Settings view
     pendingFont: null,
+    pendingSound: null,
+    isPreviewing: false,   // true while the read-only Preview render is shown instead of the editor
   };
 
   // ---------------------------------------------------------------------
@@ -531,6 +537,7 @@ function initNotesApp() {
     state.selectedId = null;
     state.isCreating = false;
     state.pendingLocation = null;
+    setPreviewMode(false);
     noteForm.hidden = true;
     emptyDetail.hidden = false;
     actionsPanel.hidden = true;
@@ -580,6 +587,7 @@ function initNotesApp() {
     state.selectedId = note.id;
     state.isCreating = false;
     state.pendingLocation = note.location || null;
+    setPreviewMode(false);
     fillFormFrom(note);
     setArchiveButtonLabel(note.archived);
     showForm();
@@ -593,6 +601,7 @@ function initNotesApp() {
     state.selectedId = null;
     state.isCreating = true;
     state.pendingLocation = null;
+    setPreviewMode(false);
 
     noteForm.reset();
     noteIdInput.value = '';
@@ -719,6 +728,7 @@ function initNotesApp() {
     if (state.selectedId) {
       const note = noteManager.getNotes().find((n) => n.id === state.selectedId);
       if (note) {
+        setPreviewMode(false);
         fillFormFrom(note);
         state.pendingLocation = note.location || null;
         ui.showFeedback('Changes discarded.');
@@ -742,7 +752,7 @@ function initNotesApp() {
   } catch {
     // Unsupported in some browsers — Enter just falls back to its default behavior.
   }
-  const formatButtons = document.querySelectorAll('.format-btn');
+  const formatButtons = document.querySelectorAll('.format-btn[data-command]');
 
   function updateFormatButtonStates() {
     formatButtons.forEach((btn) => {
@@ -764,6 +774,29 @@ function initNotesApp() {
   document.addEventListener('selectionchange', () => {
     if (document.activeElement === noteContentInput) updateFormatButtonStates();
   });
+
+  // ---------------------------------------------------------------------
+  // Preview toggle: swap the editable rich-text area for a read-only,
+  // sanitized render of the same content — lets you check formatting
+  // without risking an accidental edit.
+  // ---------------------------------------------------------------------
+
+  const previewToggleBtn = document.getElementById('preview-toggle-btn');
+  const notePreview = document.getElementById('note-preview');
+
+  function setPreviewMode(isPreviewing) {
+    state.isPreviewing = isPreviewing;
+    previewToggleBtn.setAttribute('aria-pressed', String(isPreviewing));
+    noteContentInput.hidden = isPreviewing;
+    notePreview.hidden = !isPreviewing;
+    formatButtons.forEach((btn) => { btn.disabled = isPreviewing; });
+    if (isPreviewing) {
+      notePreview.innerHTML = noteManager.sanitizeRichText(noteContentInput.innerHTML) ||
+        '<span class="note-preview-empty">Nothing to preview yet.</span>';
+    }
+  }
+
+  previewToggleBtn.addEventListener('click', () => setPreviewMode(!state.isPreviewing));
 
   // ---------------------------------------------------------------------
   // Geolocation (bonus browser API)
@@ -1128,11 +1161,18 @@ function initNotesApp() {
   // sections that stage a choice until "Apply Changes" commits it.
   // ---------------------------------------------------------------------
 
+  const getSoundMode = () => (storage.loadPreferences().soundEnabled === false ? 'off' : 'on');
+  const setSoundMode = (mode) => {
+    const prefs = storage.loadPreferences();
+    storage.savePreferences({ ...prefs, soundEnabled: mode !== 'off' });
+  };
+
   function openSettingsView() {
     state.view = 'settings';
     state.settingsSection = 'root';
     state.pendingTheme = themes.getThemeMode();
     state.pendingFont = themes.getFont();
+    state.pendingSound = getSoundMode();
     render();
   }
 
@@ -1145,6 +1185,7 @@ function initNotesApp() {
     state.settingsSection = section;
     if (section === 'theme') state.pendingTheme = themes.getThemeMode();
     if (section === 'font') state.pendingFont = themes.getFont();
+    if (section === 'sound') state.pendingSound = getSoundMode();
     render();
   }
 
@@ -1158,8 +1199,10 @@ function initNotesApp() {
     const effectiveSection = state.settingsSection === 'root' ? 'theme' : state.settingsSection;
     settingsDetailTheme.hidden = effectiveSection !== 'theme';
     settingsDetailFont.hidden = effectiveSection !== 'font';
+    settingsDetailSound.hidden = effectiveSection !== 'sound';
     settingsSectionThemeBtn.classList.toggle('is-active', effectiveSection === 'theme');
     settingsSectionFontBtn.classList.toggle('is-active', effectiveSection === 'font');
+    settingsSectionSoundBtn.classList.toggle('is-active', effectiveSection === 'sound');
 
     themeOptions.querySelectorAll('.theme-option').forEach((btn) => {
       const checked = btn.dataset.value === state.pendingTheme;
@@ -1174,6 +1217,13 @@ function initNotesApp() {
       btn.setAttribute('aria-checked', String(checked));
     });
     applyFontBtn.disabled = !state.pendingFont || state.pendingFont === themes.getFont();
+
+    soundOptions.querySelectorAll('.theme-option').forEach((btn) => {
+      const checked = btn.dataset.value === state.pendingSound;
+      btn.classList.toggle('is-selected', checked);
+      btn.setAttribute('aria-checked', String(checked));
+    });
+    applySoundBtn.disabled = !state.pendingSound || state.pendingSound === getSoundMode();
   }
 
   settingsBtn.addEventListener('click', () => {
@@ -1183,6 +1233,7 @@ function initNotesApp() {
   settingsBackBtn.addEventListener('click', () => selectSettingsSection('root'));
   settingsSectionThemeBtn.addEventListener('click', () => selectSettingsSection('theme'));
   settingsSectionFontBtn.addEventListener('click', () => selectSettingsSection('font'));
+  settingsSectionSoundBtn.addEventListener('click', () => selectSettingsSection('sound'));
 
   themeOptions.addEventListener('click', (e) => {
     const btn = e.target.closest('.theme-option');
@@ -1204,6 +1255,18 @@ function initNotesApp() {
   });
   applyFontBtn.addEventListener('click', () => {
     themes.applyFont(state.pendingFont);
+    ui.showFeedback('Settings updated successfully!');
+    renderSettingsView();
+  });
+
+  soundOptions.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-option');
+    if (!btn) return;
+    state.pendingSound = btn.dataset.value;
+    renderSettingsView();
+  });
+  applySoundBtn.addEventListener('click', () => {
+    setSoundMode(state.pendingSound);
     ui.showFeedback('Settings updated successfully!');
     renderSettingsView();
   });

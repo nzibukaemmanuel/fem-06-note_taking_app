@@ -2,6 +2,62 @@
 // Pure(ish) DOM rendering. These functions take data in and paint the DOM;
 // they never touch storage or the notes array directly.
 
+// ---------------------------------------------------------------------------
+// Sound cues (accessibility bonus): a short tone alongside toasts/errors, for
+// anyone not looking at the screen when something happens. Generated with
+// Web Audio oscillators rather than audio files, so there's nothing to fetch
+// or ship. Reads the "soundEnabled" preference straight out of localStorage
+// (not imported from storage.js, to keep this a one-way, side-effect-free
+// dependency — ui.js never touches storage.js directly elsewhere either).
+// ---------------------------------------------------------------------------
+
+let audioCtx = null;
+const getAudioCtx = () => {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+  }
+  return audioCtx;
+};
+
+const isSoundEnabled = () => {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('marginalia:preferences') || '{}');
+    return prefs.soundEnabled !== false;
+  } catch {
+    return true;
+  }
+};
+
+/** Plays one short tone. `frequencies` are played back-to-back, each `stepMs` long. */
+const playTone = (frequencies, { stepMs = 90, type = 'sine', gain = 0.08 } = {}) => {
+  if (!isSoundEnabled()) return;
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+  frequencies.forEach((freq, i) => {
+    const start = ctx.currentTime + (i * stepMs) / 1000;
+    const end = start + stepMs / 1000;
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    gainNode.gain.setValueAtTime(0, start);
+    gainNode.gain.linearRampToValueAtTime(gain, start + 0.01);
+    gainNode.gain.linearRampToValueAtTime(0, end);
+    osc.connect(gainNode).connect(ctx.destination);
+    osc.start(start);
+    osc.stop(end + 0.02);
+  });
+};
+
+/** Rising two-note chime for success/info feedback. */
+const playSuccessTone = () => playTone([523, 784], { type: 'sine' });
+/** Short low buzz for errors. */
+const playErrorTone = () => playTone([180], { stepMs: 140, type: 'square', gain: 0.06 });
+
 const notesListEl = document.getElementById('notes-list');
 const emptyState = document.getElementById('empty-state');
 const emptyBody = document.getElementById('empty-body');
@@ -185,8 +241,10 @@ export const updateFolderList = (folders, activeFolder = null, { listEl = folder
 export const showValidationError = (fieldId, message) => {
   const input = document.getElementById(fieldId);
   const errorEl = document.getElementById(`${fieldId.replace('note-', '')}-error`);
+  const isNewError = Boolean(message) && errorEl && !errorEl.textContent;
   if (input) input.classList.toggle('is-invalid', Boolean(message));
   if (errorEl) errorEl.textContent = message || '';
+  if (isNewError) playErrorTone();
 };
 
 const makeIcon = (href) => {
@@ -209,6 +267,8 @@ const makeIcon = (href) => {
  */
 export const showFeedback = (message, { type = 'info', duration = 4000, action } = {}) => {
   if (!feedbackEl) return;
+
+  type === 'error' ? playErrorTone() : playSuccessTone();
 
   const toast = document.createElement('div');
   toast.className = `toast${type === 'error' ? ' toast-error' : ''}`;
