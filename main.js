@@ -311,7 +311,10 @@ function initNotesApp() {
   const searchInput = document.getElementById('search-input');
   const notesListEl = document.getElementById('notes-list');
   const tagListEl = document.getElementById('tag-list');
-  const filterButtons = document.querySelectorAll('.filter-btn');
+  const filterButtons = document.querySelectorAll('.filter-btn[data-filter]');
+  const exportNotesBtn = document.getElementById('export-notes-btn');
+  const importNotesBtn = document.getElementById('import-notes-btn');
+  const importNotesInput = document.getElementById('import-notes-input');
 
   const newNoteBtn = document.getElementById('new-note-btn');
   const noteForm = document.getElementById('note-form');
@@ -888,6 +891,55 @@ function initNotesApp() {
 
   filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => selectFilter(btn.dataset.filter));
+  });
+
+  exportNotesBtn.addEventListener('click', () => {
+    const json = JSON.stringify(noteManager.getNotes(), null, 2);
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'notes-export.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    ui.showFeedback('Notes exported successfully!');
+  });
+
+  importNotesBtn.addEventListener('click', () => importNotesInput.click());
+  importNotesInput.addEventListener('change', async () => {
+    const file = importNotesInput.files[0];
+    if (!file) return;
+
+    try {
+      const parsed = JSON.parse(await file.text());
+      const { importedCount, skippedCount, duplicateCount } = noteManager.importNotes(parsed);
+
+      if (importedCount === 0) {
+        let notice = 'That file has no notes to import.';
+        if (duplicateCount > 0 && skippedCount > 0) notice = 'No new notes — every entry was either a duplicate or invalid.';
+        else if (duplicateCount > 0) notice = 'No new notes — all of them already exist.';
+        else if (skippedCount > 0) notice = 'None of the entries in that file were valid notes.';
+        ui.showFeedback(notice, { type: 'error' });
+        return;
+      }
+
+      const caveats = [];
+      if (duplicateCount > 0) caveats.push(`skipped ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'}`);
+      if (skippedCount > 0) caveats.push(`skipped ${skippedCount} invalid ${skippedCount === 1 ? 'entry' : 'entries'}`);
+
+      const message = `Imported ${importedCount} note${importedCount === 1 ? '' : 's'}` +
+        (caveats.length ? ` — ${caveats.join(', ')}.` : ' successfully!');
+      ui.showFeedback(message, caveats.length ? { duration: 6000 } : undefined);
+      render();
+    } catch (err) {
+      ui.showFeedback(
+        err instanceof SyntaxError
+          ? "That file isn't valid JSON."
+          : (err.message || "Couldn't import that file."),
+        { type: 'error' }
+      );
+    } finally {
+      importNotesInput.value = '';
+    }
   });
 
   [tagListEl, mobileTagList].forEach((list) => {
