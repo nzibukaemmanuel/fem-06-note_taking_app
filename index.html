@@ -85,6 +85,9 @@
   <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 5v14M5 12h14" />
   </symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.5v11" /><path d="m7.5 10.5 4.5 4.5 4.5-4.5" /><path d="M4.5 18.5v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1" />
+  </symbol>
 </svg>
 
 <div class="app" id="app">
@@ -124,6 +127,13 @@
           <button type="button" class="filter-btn" data-filter="archived">
             <svg class="nav-icon" aria-hidden="true"><use href="#icon-archive" /></svg>
             <span>Archived Notes</span>
+          </button>
+        </li>
+
+        <li>
+          <button type="button" class="filter-btn" id="export-notes-btn">
+            <svg class="nav-icon" aria-hidden="true"><use href="#icon-download" /></svg>
+            <span>Export All Notes</span>
           </button>
         </li>
       </ul>

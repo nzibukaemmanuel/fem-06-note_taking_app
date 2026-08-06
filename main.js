@@ -311,7 +311,8 @@ function initNotesApp() {
   const searchInput = document.getElementById('search-input');
   const notesListEl = document.getElementById('notes-list');
   const tagListEl = document.getElementById('tag-list');
-  const filterButtons = document.querySelectorAll('.filter-btn');
+  const filterButtons = document.querySelectorAll('.filter-btn[data-filter]');
+  const exportNotesBtn = document.getElementById('export-notes-btn');
 
   const newNoteBtn = document.getElementById('new-note-btn');
   const noteForm = document.getElementById('note-form');
@@ -888,6 +889,17 @@ function initNotesApp() {
 
   filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => selectFilter(btn.dataset.filter));
+  });
+
+  exportNotesBtn.addEventListener('click', () => {
+    const json = JSON.stringify(noteManager.getNotes(), null, 2);
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'notes-export.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    ui.showFeedback('Notes exported successfully!');
   });
 
   [tagListEl, mobileTagList].forEach((list) => {
