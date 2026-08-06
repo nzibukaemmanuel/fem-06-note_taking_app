@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notes</title>
+<meta name="description" content="Capture, tag, and find your notes fast." />
+<meta name="theme-color" content="#3B5BFB" />
+
+<script>
+  // Runs synchronously, before anything paints, so an unauthenticated visitor
+  // never sees a flash of the notes UI. Duplicates storage.js's session key
+  // rather than importing it because this can't wait for a module to load.
+  if (!localStorage.getItem('marginalia:session')) {
+    window.location.replace('login.html');
+  }
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<a class="skip-link" href="#note-form">Skip to note editor</a>
+
+<!-- Icon sprite (inline, no external requests) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 10.5 12 4l8 6.5" /><path d="M6 9.5V19a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V9.5" /><path d="M10 20v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5" />
+  </symbol>
+  <symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="4.5" width="16" height="15" rx="2.5" /><path d="M12 9v6" /><path d="m9 12 3 3 3-3" />
+  </symbol>
+  <symbol id="icon-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11.5 3.5H6A2.5 2.5 0 0 0 3.5 6v5.5a1 1 0 0 0 .3.7l8 8a1 1 0 0 0 1.4 0l7.6-7.6a1 1 0 0 0 0-1.4l-8-8a1 1 0 0 0-.7-.3Z" />
+    <circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none" />
+  </symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10.5" cy="10.5" r="6.5" /><path d="m20 20-4.3-4.3" />
+  </symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3 14.91 4.98 18.36 5.64 19.02 9.09 21 12 19.02 14.91 18.36 18.36 14.91 19.02 12 21 9.09 19.02 5.64 18.36 4.98 14.91 3 12 4.98 9.09 5.64 5.64 9.09 4.98Z" />
+    <circle cx="12" cy="12" r="3" />
+  </symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />
+  </symbol>
+  <symbol id="icon-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m9 6 6 6-6 6" />
+  </symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 7h16" /><path d="M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2" />
+    <path d="M6.5 7 7.3 19a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9L17.5 7" /><path d="M10.3 11v6" /><path d="M13.7 11v6" />
+  </symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 6l12 12M18 6 6 18" />
+  </symbol>
+  <symbol id="icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21s-6.5-5.6-6.5-11A6.5 6.5 0 0 1 18.5 10c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.2" />
+  </symbol>
+  <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4.2" />
+    <path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.1 5.9l-1.7 1.7M7.6 16.4l-1.7 1.7M18.1 18.1l-1.7-1.7M7.6 7.6 5.9 5.9" />
+  </symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 14.2A8.2 8.2 0 1 1 9.8 4a6.6 6.6 0 0 0 10.2 10.2Z" />
+  </symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+  </symbol>
+  <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3" /><path d="M16 16l4-4-4-4" /><path d="M20 12H9" />
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5 9.5 17 19 6.5" />
+  </symbol>
+  <symbol id="icon-info-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9" /><path d="M12 11v5.5" /><circle cx="12" cy="8" r="0.9" fill="currentColor" stroke="none" />
+  </symbol>
+  <symbol id="icon-chevron-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m15 6-6 6 6 6" />
+  </symbol>
+  <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 5v14M5 12h14" />
+  </symbol>
+</svg>
+
+<div class="app" id="app">
+
+  <aside id="sidebar" class="sidebar scroll-clean">
+    <div class="brand">
+      <svg class="brand-logo" width="95" height="28" viewBox="0 0 95 28" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Notes">
+        <g clip-path="url(#clip0_2359_17916)">
+          <g clip-path="url(#clip1_2359_17916)">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M27.3995 2.15804C26.3677 0.192436 22.9741 0.809836 20.0411 1.59524C7.29129 6.29364 2.78049 15.8417 1.19569 21.5299C1.11729 21.6727 1.06969 21.8365 1.06549 22.0115C0.438289 24.4251 0.352889 26.0337 0.351489 26.0869C0.327689 26.6651 0.777089 27.1537 1.35529 27.1775C1.37069 27.1789 1.38609 27.1789 1.40149 27.1789C1.96009 27.1789 2.42489 26.7379 2.45009 26.1737C2.45709 26.0029 2.52149 24.8283 2.91769 23.0727C6.42889 22.9243 9.96389 21.6167 13.4359 19.1751C13.7075 18.9847 13.8727 18.6767 13.8825 18.3463C13.8923 18.0145 13.7439 17.6981 13.4849 17.4937L11.8833 16.2253L17.1389 15.7101C17.3531 15.6891 17.5547 15.6037 17.7185 15.4637C17.8319 15.3685 20.5073 13.0781 23.0525 10.4082C26.9235 6.34824 28.2633 3.80444 27.3995 2.15804Z" fill="#335CFF" />
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M21.1783 25.0798H12.2043C11.6247 25.0798 11.1543 25.5502 11.1543 26.1298C11.1543 26.7094 11.6247 27.1798 12.2043 27.1798H21.1783C21.7579 27.1798 22.2283 26.7094 22.2283 26.1298C22.2283 25.5502 21.7579 25.0798 21.1783 25.0798Z" fill="#335CFF" />
+          </g>
+          <path d="M43.336 23.615C42.7687 23.615 42.3623 23.4923 42.117 23.247C41.8717 22.9863 41.749 22.5033 41.749 21.798C41.749 21.3227 41.795 20.7477 41.887 20.073C41.979 19.3983 42.14 18.3787 42.37 17.014C42.4007 16.83 42.5233 16.0863 42.738 14.783C42.9527 13.4643 43.1443 12.0843 43.313 10.643C43.4663 9.41633 43.543 8.49633 43.543 7.883C43.543 7.193 43.29 6.848 42.784 6.848C42.4007 6.848 41.9177 7.055 41.335 7.469C40.7677 7.86767 40.1543 8.51167 39.495 9.401C39.2803 9.69233 39.0427 9.838 38.782 9.838C38.5673 9.838 38.3757 9.73833 38.207 9.539C38.0537 9.32433 37.977 9.08667 37.977 8.826C37.977 8.56533 38.023 8.32 38.115 8.09C38.207 7.84467 38.3757 7.55333 38.621 7.216C39.3723 6.18867 40.208 5.399 41.128 4.847C42.048 4.27967 43.014 3.996 44.026 3.996C44.8693 3.996 45.498 4.25667 45.912 4.778C46.3413 5.29933 46.556 6.05833 46.556 7.055C46.556 7.94433 46.4333 9.23233 46.188 10.919C46.9547 8.64967 47.9283 6.93233 49.109 5.767C50.2897 4.58633 51.6773 3.996 53.272 3.996C54.5293 3.996 55.4723 4.35633 56.101 5.077C56.745 5.78233 57.067 6.733 57.067 7.929C57.067 8.60367 56.9673 9.424 56.768 10.39L55.365 16.968C55.2117 17.7347 55.135 18.394 55.135 18.946C55.135 19.59 55.2807 20.073 55.572 20.395C55.8787 20.717 56.3003 20.878 56.837 20.878C57.343 20.878 57.8337 20.7093 58.309 20.372C58.7997 20.0347 59.3747 19.475 60.034 18.693C60.218 18.4783 60.425 18.371 60.655 18.371C60.8543 18.371 61.0077 18.463 61.115 18.647C61.2377 18.831 61.299 19.084 61.299 19.406C61.299 20.004 61.1533 20.4793 60.862 20.832C60.0647 21.798 59.275 22.5033 58.493 22.948C57.711 23.3927 56.8907 23.615 56.032 23.615C54.7287 23.615 53.709 23.2317 52.973 22.465C52.237 21.683 51.869 20.6403 51.869 19.337C51.869 18.831 51.9073 18.279 51.984 17.681C52.076 17.083 52.2217 16.324 52.421 15.404L53.341 11.195C53.3717 11.057 53.4253 10.8117 53.502 10.459C53.5787 10.1063 53.64 9.77667 53.686 9.47C53.732 9.148 53.755 8.83367 53.755 8.527C53.755 8.03633 53.617 7.64533 53.341 7.354C53.065 7.06267 52.674 6.917 52.168 6.917C51.248 6.917 50.328 7.40767 49.408 8.389C48.488 9.37033 47.637 10.9573 46.855 13.15C46.073 15.3273 45.4597 18.118 45.015 21.522C44.9077 22.304 44.7467 22.8483 44.532 23.155C44.3327 23.4617 43.934 23.615 43.336 23.615ZM70.7012 16.439C70.9005 16.439 71.0538 16.5387 71.1611 16.738C71.2685 16.9373 71.3222 17.1903 71.3222 17.497C71.3222 18.233 71.0998 18.67 70.6552 18.808C69.7352 19.13 68.7231 19.314 67.6191 19.36C67.3278 20.648 66.7528 21.683 65.8941 22.465C65.0355 23.2317 64.0618 23.615 62.9731 23.615C62.0531 23.615 61.2635 23.3927 60.6041 22.948C59.9601 22.5033 59.4695 21.913 59.1321 21.177C58.7948 20.441 58.6261 19.6437 58.6261 18.785C58.6261 17.6197 58.8485 16.5847 59.2931 15.68C59.7378 14.76 60.3511 14.047 61.1331 13.541C61.9151 13.0197 62.7815 12.759 63.7321 12.759C64.8975 12.759 65.8328 13.1653 66.5381 13.978C67.2588 14.7753 67.6805 15.7643 67.8031 16.945C68.5238 16.899 69.3825 16.7457 70.3792 16.485C70.5018 16.4543 70.6092 16.439 70.7012 16.439ZM63.1571 21.177C63.6478 21.177 64.0695 20.9777 64.4221 20.579C64.7901 20.1803 65.0355 19.6053 65.1581 18.854C64.6828 18.532 64.3148 18.1103 64.0541 17.589C63.8088 17.0677 63.6861 16.5157 63.6861 15.933C63.6861 15.6877 63.7091 15.4423 63.7551 15.197H63.6401C63.0268 15.197 62.5131 15.496 62.0991 16.094C61.7005 16.6767 61.5011 17.5047 61.5011 18.578C61.5011 19.4213 61.6621 20.0653 61.9841 20.51C62.3215 20.9547 62.7125 21.177 63.1571 21.177ZM79.7301 18.371C79.9294 18.371 80.0828 18.463 80.1901 18.647C80.3128 18.831 80.3741 19.084 80.3741 19.406C80.3741 20.0193 80.2284 20.4947 79.9371 20.832C79.2778 21.6447 78.5571 22.3117 77.7751 22.833C76.9931 23.3543 76.0961 23.615 75.0841 23.615C71.9561 23.615 70.3921 21.4147 70.3921 17.014C70.3921 16.3393 70.4151 15.657 70.4611 14.967H69.5641C69.1041 14.967 68.7898 14.8827 68.6211 14.714C68.4678 14.5453 68.3911 14.277 68.3911 13.909C68.3911 13.0503 68.7361 12.621 69.4261 12.621H70.7371C70.9978 10.9343 71.3964 9.39333 71.9331 7.998C72.4698 6.60267 73.1138 5.491 73.8651 4.663C74.6318 3.835 75.4521 3.421 76.3261 3.421C76.9701 3.421 77.4761 3.70467 77.8441 4.272C78.2121 4.83933 78.3961 5.55233 78.3961 6.411C78.3961 8.78767 77.3994 10.8577 75.4061 12.621H77.9821C78.2274 12.621 78.4038 12.6747 78.5111 12.782C78.6184 12.8893 78.6721 13.0887 78.6721 13.38C78.6721 14.438 77.8058 14.967 76.0731 14.967H73.2671C73.2364 15.7337 73.2211 16.3317 73.2211 16.761C73.2211 18.3557 73.4051 19.475 73.7731 20.119C74.1564 20.763 74.7544 21.085 75.5671 21.085C76.2264 21.085 76.8091 20.8857 77.3151 20.487C77.8211 20.0883 78.4191 19.4903 79.1091 18.693C79.2931 18.4783 79.5001 18.371 79.7301 18.371ZM75.7051 5.629C75.4751 5.629 75.2144 5.92033 74.9231 6.503C74.6471 7.07033 74.3788 7.86767 74.1181 8.895C73.8728 9.907 73.6658 11.034 73.4971 12.276C74.4018 11.494 75.0764 10.62 75.5211 9.654C75.9811 8.67267 76.2111 7.78333 76.2111 6.986C76.2111 6.08133 76.0424 5.629 75.7051 5.629ZM88.2994 18.371C88.4987 18.371 88.652 18.463 88.7594 18.647C88.882 18.831 88.9434 19.084 88.9434 19.406C88.9434 20.0193 88.7977 20.4947 88.5064 20.832C87.939 21.522 87.134 22.1583 86.0914 22.741C85.064 23.3237 83.96 23.615 82.7794 23.615C81.1694 23.615 79.9197 23.178 79.0304 22.304C78.141 21.43 77.6964 20.234 77.6964 18.716C77.6964 17.658 77.9187 16.6767 78.3634 15.772C78.808 14.852 79.4214 14.1237 80.2034 13.587C81.0007 13.0503 81.8977 12.782 82.8944 12.782C83.7837 12.782 84.4967 13.0503 85.0334 13.587C85.57 14.1083 85.8384 14.8213 85.8384 15.726C85.8384 16.784 85.455 17.6963 84.6884 18.463C83.937 19.2143 82.6567 19.8123 80.8474 20.257C81.2307 20.9623 81.959 21.315 83.0324 21.315C83.7224 21.315 84.5044 21.0773 85.3784 20.602C86.2677 20.1113 87.0344 19.475 87.6784 18.693C87.8624 18.4783 88.0694 18.371 88.2994 18.371ZM82.5034 15.036C81.936 15.036 81.453 15.3657 81.0544 16.025C80.671 16.6843 80.4794 17.4817 80.4794 18.417V18.463C81.384 18.2483 82.097 17.9263 82.6184 17.497C83.1397 17.0677 83.4004 16.5693 83.4004 16.002C83.4004 15.7107 83.316 15.4807 83.1474 15.312C82.994 15.128 82.7794 15.036 82.5034 15.036ZM90.8887 24.121C90.0913 24.121 89.478 23.937 89.0487 23.569C88.6347 23.201 88.4277 22.787 88.4277 22.327C88.4277 21.9283 88.5733 21.5833 88.8647 21.292C89.156 21.0007 89.5853 20.855 90.1527 20.855C90.352 20.855 90.582 20.878 90.8427 20.924C91.1187 20.9547 91.3257 20.9777 91.4637 20.993C91.4483 20.5943 91.3563 20.2187 91.1877 19.866C91.0343 19.5133 90.835 19.176 90.5897 18.854C90.3443 18.5167 90.1143 18.2253 89.8997 17.98C89.4243 18.8847 88.949 19.636 88.4737 20.234C88.0137 20.832 87.5077 21.3993 86.9557 21.936C86.6797 22.212 86.3883 22.35 86.0817 22.35C85.8363 22.35 85.637 22.2657 85.4837 22.097C85.3303 21.913 85.2537 21.6907 85.2537 21.43C85.2537 21.1233 85.361 20.8397 85.5757 20.579L85.8747 20.211C86.718 19.1683 87.3543 18.3097 87.7837 17.635C88.0597 17.1903 88.3357 16.6613 88.6117 16.048C88.903 15.4347 89.2787 14.599 89.7387 13.541C90.03 12.8663 90.6357 12.529 91.5557 12.529C91.985 12.529 92.284 12.5673 92.4527 12.644C92.6213 12.7207 92.7057 12.8433 92.7057 13.012C92.7057 13.104 92.675 13.2497 92.6137 13.449C92.5523 13.6483 92.468 13.8477 92.3607 14.047C92.0847 14.599 91.9467 15.0667 91.9467 15.45C91.9467 15.68 92.0233 15.933 92.1767 16.209C92.3453 16.485 92.5983 16.83 92.9357 17.244C93.4263 17.888 93.7943 18.44 94.0397 18.9C94.3003 19.3447 94.4307 19.8353 94.4307 20.372C94.4307 21.016 94.2773 21.6293 93.9707 22.212C93.6793 22.7793 93.2653 23.2393 92.7287 23.592C92.192 23.9447 91.5787 24.121 90.8887 24.121Z" fill="currentColor" />
+        </g>
+        <defs>
+          <clipPath id="clip0_2359_17916">
+            <rect width="95" height="28" fill="white" />
+          </clipPath>
+          <clipPath id="clip1_2359_17916">
+            <rect width="28" height="28" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    </div>
+
+    <nav aria-label="Note filters" class="sidebar-nav">
+      <ul class="filter-list">
+        <li>
+          <button type="button" class="filter-btn is-active" data-filter="all">
+            <svg class="nav-icon" aria-hidden="true"><use href="#icon-home" /></svg>
+            <span>All Notes</span>
+            <svg class="chevron" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
+          </button>
+        </li>
+
+        <li>
+          <button type="button" class="filter-btn" data-filter="archived">
+            <svg class="nav-icon" aria-hidden="true"><use href="#icon-archive" /></svg>
+            <span>Archived Notes</span>
+          </button>
+        </li>
+      </ul>
+
+
+      <h2 class="sidebar-heading">Tags</h2>
+      <ul class="tag-list" id="tag-list" aria-label="Filter by tag">
+        <!-- tags injected here -->
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <!-- <p class="hint">Draft notes are saved automatically as you type, and restored if you close the tab. Drag a note onto "Archived Notes" to file it.</p> -->
+    </div>
+  </aside>
+
+  <div class="content">
+    <header class="content-header">
+      <h1 id="view-title">All Notes</h1>
+      <div class="list-toolbar">
+        <form class="search-box" role="search" id="search-form">
+          <svg class="search-icon" aria-hidden="true"><use href="#icon-search" /></svg>
+          <label class="visually-hidden" for="search-input">Search notes</label>
+          <input type="search" id="search-input" name="search" placeholder="Search by title, content, or tags…" autocomplete="off" />
+        </form>
+        <button type="button" id="settings-btn" class="icon-btn-square" aria-pressed="false" aria-label="Settings">
+          <svg aria-hidden="true"><use href="#icon-settings" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+
+    <div class="storage-warning" id="storage-warning" role="alert" hidden>
+      <strong>Notes can't be saved right now.</strong>
+      Your browser is blocking local storage for this page — this usually happens when the file is opened directly
+      (double-clicked) instead of served from a local web server. Serve this folder over
+      <code>http://localhost</code> (e.g. the VS Code "Live Server" extension, or <code>npx serve</code>) and reload.
+    </div>
+
+    <div class="content-body">
+      <section class="list-panel scroll-clean" aria-label="Notes list">
+        <button type="button" id="new-note-btn" class="btn btn-primary btn-block">+ Create New Note</button>
+
+        <p class="view-subtitle" id="view-subtitle"></p>
+
+        <ul class="notes-list" id="notes-list" aria-label="Notes"></ul>
+
+        <div class="empty-state" id="empty-state" hidden>
+          <p class="empty-title">Nothing here yet</p>
+          <p class="empty-body" id="empty-body">Write your first note — it takes less time than finding a pen.</p>
+        </div>
+      </section>
+
+      <main id="detail-panel" class="detail-panel scroll-clean">
+        <div class="mobile-detail-toolbar" id="mobile-detail-toolbar">
+          <button type="button" class="mobile-back-btn" id="mobile-detail-back-btn">
+            <svg aria-hidden="true"><use href="#icon-chevron-left" /></svg> Go Back
+          </button>
+          <div class="mobile-detail-toolbar-actions">
+            <span class="mobile-detail-toolbar-icons" id="mobile-detail-toolbar-icons" hidden>
+              <button type="button" class="icon-btn-ghost" id="mobile-delete-btn" aria-label="Delete note">
+                <svg aria-hidden="true"><use href="#icon-trash" /></svg>
+              </button>
+              <button type="button" class="icon-btn-ghost" id="mobile-archive-btn" aria-label="Archive note">
+                <svg aria-hidden="true"><use href="#icon-archive" /></svg>
+              </button>
+            </span>
+            <button type="button" class="mobile-text-btn" id="mobile-cancel-btn">Cancel</button>
+            <button type="button" class="mobile-text-btn mobile-text-btn-primary" id="mobile-save-btn">Save Note</button>
+          </div>
+        </div>
+
+        <form id="note-form" novalidate hidden>
+      <input type="hidden" id="note-id" name="id" />
+
+      <div class="field">
+        <input type="text" id="note-title" class="detail-title-input" name="title" placeholder="Note title" required minlength="3" maxlength="120" aria-label="Title" aria-describedby="title-error" />
+        <p class="field-error" id="title-error" role="alert"></p>
+      </div>
+
+      <div class="detail-meta">
+        <div class="meta-row">
+          <svg class="meta-icon" aria-hidden="true"><use href="#icon-tag" /></svg>
+          <span class="meta-label">Tags</span>
+          <input type="text" id="note-tags" name="tags" placeholder="Dev, React (comma-separated)" aria-describedby="tags-hint" />
+        </div>
+        <div class="meta-row" id="last-edited-row">
+          <svg class="meta-icon" aria-hidden="true"><use href="#icon-clock" /></svg>
+          <span class="meta-label">Last edited</span>
+          <span id="note-last-edited"></span>
+        </div>
+      </div>
+      <p class="field-hint visually-hidden" id="tags-hint">Separate tags with commas.</p>
+
+      <hr class="detail-divider" />
+
+      <div class="field field-content">
+        <label class="visually-hidden" for="note-content">Content</label>
+        <textarea id="note-content" name="content" maxlength="4000" placeholder="Write something worth remembering…"></textarea>
+      </div>
+
+      <div class="field location-field">
+        <button type="button" class="btn-link" id="add-location-btn">
+          <svg aria-hidden="true"><use href="#icon-pin" /></svg> Add my location
+        </button>
+        <span class="location-display" id="location-display" aria-live="polite"></span>
+      </div>
+
+      <div class="detail-actions">
+        <div class="detail-actions-buttons">
+          <button type="submit" class="btn btn-primary" id="save-btn">Save Note</button>
+          <button type="button" class="btn btn-ghost" id="cancel-btn">Cancel</button>
+        </div>
+      </div>
+    </form>
+
+        <div class="empty-detail" id="empty-detail">
+          <p class="empty-title">Select a note</p>
+          <p class="empty-body">Choose a note from the list, or create a new one to get started.</p>
+        </div>
+      </main>
+
+      <aside class="actions-panel" id="actions-panel" hidden>
+        <button type="button" class="btn btn-outline" id="archive-note-btn">
+          <svg aria-hidden="true"><use href="#icon-archive" /></svg> <span id="archive-note-label">Archive Note</span>
+        </button>
+        <button type="button" class="btn btn-outline btn-outline-danger" id="delete-note-btn">
+          <svg aria-hidden="true"><use href="#icon-trash" /></svg> Delete Note
+        </button>
+      </aside>
+
+      <div class="settings-view" id="settings-view" hidden>
+        <nav class="settings-subnav scroll-clean" aria-label="Settings sections">
+          <button type="button" class="settings-row" id="settings-section-theme-btn" data-section="theme">
+            <svg class="settings-row-icon" aria-hidden="true"><use href="#icon-sun" /></svg>
+            <span class="settings-row-label">Color Theme</span>
+            <svg class="chevron" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
+          </button>
+          <button type="button" class="settings-row" id="settings-section-font-btn" data-section="font">
+            <span class="settings-row-icon settings-row-icon-text" aria-hidden="true">Aa</span>
+            <span class="settings-row-label">Font Theme</span>
+            <svg class="chevron" aria-hidden="true"><use href="#icon-chevron-right" /></svg>
+          </button>
+          <hr class="settings-divider" />
+          <button type="button" class="settings-row" id="change-password-btn">
+            <svg class="settings-row-icon" aria-hidden="true"><use href="#icon-lock" /></svg>
+            <span class="settings-row-label">Change Password</span>
+          </button>
+          <button type="button" class="settings-row" id="logout-btn">
+            <svg class="settings-row-icon" aria-hidden="true"><use href="#icon-logout" /></svg>
+            <span class="settings-row-label">Logout</span>
+          </button>
+        </nav>
+
+        <div class="settings-detail scroll-clean">
+          <button type="button" class="settings-back-btn" id="settings-back-btn">
+            <svg aria-hidden="true"><use href="#icon-chevron-left" /></svg> Settings
+          </button>
+
+          <section class="settings-detail-section" id="settings-detail-theme">
+            <h2>Color Theme</h2>
+            <p class="settings-detail-subtitle">Choose your color theme:</p>
+            <div class="theme-options" id="theme-options" role="radiogroup" aria-label="Color theme">
+              <button type="button" class="theme-option" data-value="light" role="radio" aria-checked="false">
+                <span class="theme-option-icon"><svg aria-hidden="true"><use href="#icon-sun" /></svg></span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Light Mode</span>
+                  <span class="theme-option-desc">Pick a clean and classic light theme</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="theme-option" data-value="dark" role="radio" aria-checked="false">
+                <span class="theme-option-icon"><svg aria-hidden="true"><use href="#icon-moon" /></svg></span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Dark Mode</span>
+                  <span class="theme-option-desc">Select a sleek and modern dark theme</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" class="btn btn-primary" id="apply-theme-btn" disabled>Apply Changes</button>
+          </section>
+
+          <section class="settings-detail-section" id="settings-detail-font" hidden>
+            <h2>Font Theme</h2>
+            <p class="settings-detail-subtitle">Choose your font theme:</p>
+            <div class="theme-options" id="font-options" role="radiogroup" aria-label="Font theme">
+              <button type="button" class="theme-option" data-value="sans" role="radio" aria-checked="false">
+                <span class="theme-option-icon font-sample-sans" aria-hidden="true">Aa</span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Sans</span>
+                  <span class="theme-option-desc">Clean and modern sans-serif</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="theme-option" data-value="serif" role="radio" aria-checked="false">
+                <span class="theme-option-icon font-sample-serif" aria-hidden="true">Aa</span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Serif</span>
+                  <span class="theme-option-desc">Classic serif for a literary feel</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="theme-option" data-value="mono" role="radio" aria-checked="false">
+                <span class="theme-option-icon font-sample-mono" aria-hidden="true">Aa</span>
+                <span class="theme-option-copy">
+                  <span class="theme-option-title">Mono</span>
+                  <span class="theme-option-desc">Monospaced, code-friendly look</span>
+                </span>
+                <span class="theme-option-radio" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" class="btn btn-primary" id="apply-font-btn" disabled>Apply Changes</button>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="fab-new-note" id="fab-new-note-btn" aria-label="Create new note">
+    <svg aria-hidden="true"><use href="#icon-plus" /></svg>
+  </button>
+
+  <nav class="mobile-tabbar" id="mobile-tabbar" aria-label="Primary">
+    <button type="button" class="tab-btn is-active" data-tab="home">
+      <svg aria-hidden="true"><use href="#icon-home" /></svg>
+      <span>Home</span>
+    </button>
+    <button type="button" class="tab-btn" data-tab="search">
+      <svg aria-hidden="true"><use href="#icon-search" /></svg>
+      <span>Search</span>
+    </button>
+    <button type="button" class="tab-btn" data-tab="archived">
+      <svg aria-hidden="true"><use href="#icon-archive" /></svg>
+      <span>Archived</span>
+    </button>
+    <button type="button" class="tab-btn" data-tab="tags">
+      <svg aria-hidden="true"><use href="#icon-tag" /></svg>
+      <span>Tags</span>
+    </button>
+    <button type="button" class="tab-btn" data-tab="settings">
+      <svg aria-hidden="true"><use href="#icon-settings" /></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <div class="mobile-view-overlay" id="mobile-search-view" hidden>
+    <header class="mobile-view-header">
+      <button type="button" class="icon-btn-square" id="mobile-search-back-btn" aria-label="Back">
+        <svg aria-hidden="true"><use href="#icon-chevron-left" /></svg>
+      </button>
+      <form class="search-box" role="search" id="mobile-search-form">
+        <svg class="search-icon" aria-hidden="true"><use href="#icon-search" /></svg>
+        <label class="visually-hidden" for="mobile-search-input">Search notes</label>
+        <input type="search" id="mobile-search-input" placeholder="Search by title, content, or tags…" autocomplete="off" />
+      </form>
+    </header>
+    <ul class="notes-list scroll-clean" id="mobile-search-results" aria-label="Search results"></ul>
+    <div class="empty-state" id="mobile-search-empty" hidden>
+      <p class="empty-title">Search your notes</p>
+      <p class="empty-body" id="mobile-search-empty-body">Start typing to search by title, content, or tags.</p>
+    </div>
+  </div>
+
+  <div class="mobile-view-overlay" id="mobile-tags-view" hidden>
+    <header class="mobile-view-header">
+      <button type="button" class="icon-btn-square" id="mobile-tags-back-btn" aria-label="Back">
+        <svg aria-hidden="true"><use href="#icon-chevron-left" /></svg>
+      </button>
+      <h2>Tags</h2>
+    </header>
+    <div class="mobile-view-body scroll-clean">
+      <h3 class="sidebar-heading">Tags</h3>
+      <ul class="tag-list" id="mobile-tag-list" aria-label="Filter by tag"></ul>
+    </div>
+  </div>
+
+</div>
+
+<dialog class="confirm-modal" id="confirm-modal" aria-labelledby="confirm-title">
+  <div class="confirm-body">
+    <h2 id="confirm-title">Delete this note?</h2>
+    <p id="confirm-body-text">This can't be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="confirm-modal" id="archive-modal" aria-labelledby="archive-modal-title">
+  <div class="confirm-body">
+    <div class="modal-icon" aria-hidden="true">
+      <svg><use href="#icon-archive" /></svg>
+    </div>
+    <h2 id="archive-modal-title">Archive note?</h2>
+    <p id="archive-modal-text">This can't be undone.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="archive-cancel-btn">Cancel</button>
+      <button type="button" class="btn btn-primary" id="archive-confirm-btn">Archive</button>
+    </div>
+  </div>
+</dialog>
+
+<template id="note-item-template">
+  <li class="note-item" tabindex="0">
+    <h3 class="note-item-title"></h3>
+    <ul class="note-tags"></ul>
+    <time class="note-item-date"></time>
+  </li>
+</template>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

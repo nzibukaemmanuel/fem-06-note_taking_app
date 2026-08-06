@@ -1,0 +1,15 @@
+{
+  "name": "Notes — a fast, offline-capable note taker",
+  "short_name": "Notes",
+  "description": "Capture, tag, and find your notes fast. Works offline.",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#F7F7F9",
+  "theme_color": "#3B5BFB",
+  "orientation": "any",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
