@@ -51,6 +51,9 @@ export const renderNoteItem = (note, { highlight = '', selected = false } = {}) 
   titleEl.textContent = '';
   titleEl.appendChild(highlightText(note.title, highlight));
 
+  const folderBadgeEl = el.querySelector('.note-folder-badge');
+  folderBadgeEl.textContent = note.folder || 'UNCATEGORIZED';
+
   const tagsEl = el.querySelector('.note-tags');
   tagsEl.innerHTML = '';
   note.tags.forEach((tag) => {

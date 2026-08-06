@@ -809,6 +809,16 @@ svg {
   line-height: 1.3;
 }
 
+.note-folder-badge {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
 .note-item .note-tags {
   display: flex;
   flex-wrap: wrap;
