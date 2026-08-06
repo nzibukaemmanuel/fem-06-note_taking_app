@@ -7,6 +7,7 @@ const emptyState = document.getElementById('empty-state');
 const emptyBody = document.getElementById('empty-body');
 const itemTemplate = document.getElementById('note-item-template');
 const tagListEl = document.getElementById('tag-list');
+const folderListEl = document.getElementById('folder-list');
 const feedbackEl = document.getElementById('feedback');
 
 const formatDate = (iso) => {
@@ -134,6 +135,41 @@ export const updateTagList = (tags, activeTag = null, { listEl = tagListEl } = {
     const name = document.createElement('span');
     name.className = 'tag-name';
     name.textContent = tag;
+
+    btn.append(icon, name);
+    li.appendChild(btn);
+    listEl.appendChild(li);
+  });
+};
+
+/** Render the custom-folder list (sidebar or the mobile Tags overlay). */
+export const updateFolderList = (folders, { listEl = folderListEl } = {}) => {
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  if (folders.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'hint';
+    li.textContent = 'Create a folder to start organizing your notes.';
+    listEl.appendChild(li);
+    return;
+  }
+
+  folders.forEach((folder) => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tag-chip';
+    btn.dataset.folderId = folder.id;
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('aria-hidden', 'true');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#icon-folder');
+    icon.appendChild(use);
+
+    const name = document.createElement('span');
+    name.className = 'tag-name';
+    name.textContent = folder.name;
 
     btn.append(icon, name);
     li.appendChild(btn);

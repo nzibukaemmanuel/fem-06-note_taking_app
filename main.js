@@ -316,6 +316,8 @@ function initNotesApp() {
   const importNotesBtn = document.getElementById('import-notes-btn');
   const importNotesInput = document.getElementById('import-notes-input');
 
+  const mobileFolderList = document.getElementById('mobile-folder-list');
+
   const newNoteBtn = document.getElementById('new-note-btn');
   const noteForm = document.getElementById('note-form');
   const emptyDetail = document.getElementById('empty-detail');
@@ -446,6 +448,7 @@ function initNotesApp() {
       selectedId: state.selectedId,
     });
     ui.updateTagList(noteManager.getAllTags(), state.tag);
+    ui.updateFolderList(noteManager.getFolders());
     ui.toggleArchiveView(state.filter === 'archived');
     updateHeader();
     updateMobileTabbar();
@@ -1098,6 +1101,7 @@ function initNotesApp() {
   function openMobileTags() {
     mobileTagsView.hidden = false;
     ui.updateTagList(noteManager.getAllTags(), state.tag, { listEl: mobileTagList });
+    ui.updateFolderList(noteManager.getFolders(), { listEl: mobileFolderList });
     updateMobileTabbar();
   }
 

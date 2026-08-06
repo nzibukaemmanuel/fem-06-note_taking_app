@@ -91,6 +91,9 @@
   <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 14.5v-11" /><path d="m7.5 7 4.5-4.5L16.5 7" /><path d="M4.5 18.5v1a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-1" />
   </symbol>
+  <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h3.879a1.5 1.5 0 0 1 1.06.44L11.5 6.5H18.5A1.5 1.5 0 0 1 20 8v9.5A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-11Z" />
+  </symbol>
 </svg>
 
 <div class="app" id="app">
@@ -149,6 +152,11 @@
         </li>
       </ul>
 
+
+      <h2 class="sidebar-heading">Folders</h2>
+      <ul class="tag-list" id="folder-list" aria-label="Filter by folder">
+        <!-- folders injected here -->
+      </ul>
 
       <h2 class="sidebar-heading">Tags</h2>
       <ul class="tag-list" id="tag-list" aria-label="Filter by tag">
@@ -418,6 +426,9 @@
       <h2>Tags</h2>
     </header>
     <div class="mobile-view-body scroll-clean">
+      <h3 class="sidebar-heading">Folders</h3>
+      <ul class="tag-list" id="mobile-folder-list" aria-label="Filter by folder"></ul>
+
       <h3 class="sidebar-heading">Tags</h3>
       <ul class="tag-list" id="mobile-tag-list" aria-label="Filter by tag"></ul>
     </div>

@@ -136,6 +136,9 @@ function buildSampleNotes() {
   });
 }
 
+// Static for now — there's no way to add/remove a folder from the UI.
+const FOLDER_NAMES = ['Idea', 'Personal', 'Work', 'UNCATEGORIZED'];
+
 export const init = () => {
   notes = storage.loadNotes();
   if (notes.length === 0 && !storage.wasSeeded()) {
@@ -155,6 +158,8 @@ export const init = () => {
 };
 
 export const getNotes = () => notes;
+
+export const getFolders = () => FOLDER_NAMES.map((name) => ({ id: name, name }));
 
 export const getAllTags = () => {
   const set = new Set(DEFAULT_TAGS);
