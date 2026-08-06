@@ -492,7 +492,7 @@ function initNotesApp() {
   function fillFormFrom(note) {
     noteIdInput.value = note.id;
     noteTitleInput.value = note.title;
-    noteContentInput.value = note.content;
+    noteContentInput.innerHTML = note.content;
     noteTagsInput.value = note.tags.join(', ');
     noteFolderInput.value = note.folder || 'UNCATEGORIZED';
     lastEditedRow.hidden = false;
@@ -544,6 +544,7 @@ function initNotesApp() {
 
     noteForm.reset();
     noteIdInput.value = '';
+    noteContentInput.innerHTML = ''; // form.reset() doesn't touch contenteditable elements
     noteFolderInput.value = 'UNCATEGORIZED';
     lastEditedRow.hidden = true;
     locationDisplay.textContent = '';
@@ -595,7 +596,7 @@ function initNotesApp() {
     draftTimeout = setTimeout(() => {
       const draft = {
         title: noteTitleInput.value,
-        content: noteContentInput.value,
+        content: noteContentInput.innerHTML,
         tags: noteTagsInput.value,
       };
       if (draft.title || draft.content || draft.tags) {
@@ -610,7 +611,7 @@ function initNotesApp() {
     const draft = storage.loadDraft();
     if (!draft) return;
     noteTitleInput.value = draft.title || '';
-    noteContentInput.value = draft.content || '';
+    noteContentInput.innerHTML = draft.content || '';
     noteTagsInput.value = draft.tags || '';
     saveBtn.disabled = !isTitleValid();
     if (draft.title || draft.content) {
@@ -630,7 +631,7 @@ function initNotesApp() {
     }
 
     const title = noteTitleInput.value.trim();
-    const content = noteContentInput.value.trim();
+    const content = noteContentInput.innerHTML.trim();
     const tags = noteTagsInput.value;
     const folder = noteFolderInput.value;
 
@@ -675,6 +676,41 @@ function initNotesApp() {
   cancelBtn.addEventListener('click', discardChanges);
   mobileCancelBtn.addEventListener('click', discardChanges);
   mobileSaveBtn.addEventListener('click', () => noteForm.requestSubmit());
+
+  // ---------------------------------------------------------------------
+  // Rich text formatting: Bold / Italic / Underline toolbar above the
+  // content editor. Uses execCommand — deprecated broadly, but these three
+  // specific commands remain reliably supported everywhere, and writing a
+  // custom Selection/Range-based toggler would buy nothing here.
+  // ---------------------------------------------------------------------
+
+  try {
+    document.execCommand('defaultParagraphSeparator', false, 'br');
+  } catch {
+    // Unsupported in some browsers — Enter just falls back to its default behavior.
+  }
+  const formatButtons = document.querySelectorAll('.format-btn');
+
+  function updateFormatButtonStates() {
+    formatButtons.forEach((btn) => {
+      btn.setAttribute('aria-pressed', String(document.queryCommandState(btn.dataset.command)));
+    });
+  }
+
+  formatButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      noteContentInput.focus();
+      document.execCommand(btn.dataset.command);
+      updateFormatButtonStates();
+      autosaveDraft();
+    });
+  });
+
+  noteContentInput.addEventListener('keyup', updateFormatButtonStates);
+  noteContentInput.addEventListener('mouseup', updateFormatButtonStates);
+  document.addEventListener('selectionchange', () => {
+    if (document.activeElement === noteContentInput) updateFormatButtonStates();
+  });
 
   // ---------------------------------------------------------------------
   // Geolocation (bonus browser API)

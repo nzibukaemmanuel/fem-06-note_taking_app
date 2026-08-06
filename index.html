@@ -257,7 +257,12 @@
 
       <div class="field field-content">
         <label class="visually-hidden" for="note-content">Content</label>
-        <textarea id="note-content" name="content" maxlength="4000" placeholder="Write something worth remembering…"></textarea>
+        <div class="format-toolbar" id="format-toolbar" role="toolbar" aria-label="Text formatting" aria-controls="note-content">
+          <button type="button" class="format-btn" data-command="bold" aria-label="Bold" aria-pressed="false"><strong>B</strong></button>
+          <button type="button" class="format-btn" data-command="italic" aria-label="Italic" aria-pressed="false"><em>I</em></button>
+          <button type="button" class="format-btn" data-command="underline" aria-label="Underline" aria-pressed="false"><u>U</u></button>
+        </div>
+        <div id="note-content" class="rich-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Content" data-placeholder="Write something worth remembering…"></div>
       </div>
 
       <div class="field location-field">

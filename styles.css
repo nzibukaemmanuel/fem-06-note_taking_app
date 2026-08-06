@@ -1074,14 +1074,50 @@ mark {
   flex: 1;
 }
 
-.field-content textarea {
+.format-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.format-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.format-btn:hover {
+  background: var(--bg-alt);
+  color: var(--ink);
+}
+
+.format-btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.rich-content {
   border: none;
   background: transparent;
   color: var(--ink);
-  resize: vertical;
   min-height: 320px;
   line-height: 1.6;
   padding: 0;
+  white-space: pre-wrap;
+  outline: none;
+}
+
+.rich-content:empty::before {
+  content: attr(data-placeholder);
+  color: var(--ink-faint);
 }
 
 .field-error {
