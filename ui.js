@@ -142,8 +142,8 @@ export const updateTagList = (tags, activeTag = null, { listEl = tagListEl } = {
   });
 };
 
-/** Render the custom-folder list (sidebar or the mobile Tags overlay). */
-export const updateFolderList = (folders, { listEl = folderListEl } = {}) => {
+/** Render the custom-folder list (sidebar or the mobile Tags overlay); `activeFolder` gets the active style. */
+export const updateFolderList = (folders, activeFolder = null, { listEl = folderListEl } = {}) => {
   if (!listEl) return;
   listEl.innerHTML = '';
   if (folders.length === 0) {
@@ -159,7 +159,8 @@ export const updateFolderList = (folders, { listEl = folderListEl } = {}) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tag-chip';
-    btn.dataset.folderId = folder.id;
+    btn.dataset.folderName = folder.name;
+    if (folder.name === activeFolder) btn.classList.add('is-active');
 
     const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     icon.setAttribute('aria-hidden', 'true');

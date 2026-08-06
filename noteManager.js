@@ -344,6 +344,11 @@ export const filterByTag = (tag, list = notes) => {
   return list.filter((n) => n.tags.includes(tag));
 };
 
+export const filterByFolder = (folder, list = notes) => {
+  if (!folder) return list;
+  return list.filter((n) => (n.folder || 'UNCATEGORIZED') === folder);
+};
+
 export const filterByArchived = (archived, list = notes) =>
   list.filter((n) => Boolean(n.archived) === archived);
 
