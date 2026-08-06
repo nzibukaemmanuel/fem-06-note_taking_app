@@ -911,15 +911,28 @@ function initNotesApp() {
 
     try {
       const parsed = JSON.parse(await file.text());
-      const count = noteManager.importNotes(parsed);
-      if (count === 0) {
-        ui.showFeedback('No valid notes found in that file.', { type: 'error' });
-      } else {
-        ui.showFeedback(`Imported ${count} note${count === 1 ? '' : 's'} successfully!`);
-        render();
+      const { importedCount, skippedCount } = noteManager.importNotes(parsed);
+
+      if (importedCount === 0) {
+        ui.showFeedback(
+          skippedCount > 0 ? "None of the entries in that file were valid notes." : 'That file has no notes to import.',
+          { type: 'error' }
+        );
+        return;
       }
+
+      const message = skippedCount > 0
+        ? `Imported ${importedCount} note${importedCount === 1 ? '' : 's'} — skipped ${skippedCount} invalid ${skippedCount === 1 ? 'entry' : 'entries'}.`
+        : `Imported ${importedCount} note${importedCount === 1 ? '' : 's'} successfully!`;
+      ui.showFeedback(message, skippedCount > 0 ? { duration: 6000 } : undefined);
+      render();
     } catch (err) {
-      ui.showFeedback("Couldn't import that file — make sure it's a valid notes JSON export.", { type: 'error' });
+      ui.showFeedback(
+        err instanceof SyntaxError
+          ? "That file isn't valid JSON."
+          : (err.message || "Couldn't import that file."),
+        { type: 'error' }
+      );
     } finally {
       importNotesInput.value = '';
     }

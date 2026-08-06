@@ -202,34 +202,102 @@ export const toggleArchive = (id) => {
   return updated;
 };
 
+const isValidDateString = (value) => !Number.isNaN(new Date(value).getTime());
+
+const isValidLocation = (value) =>
+  value === null ||
+  value === undefined ||
+  (
+    typeof value === 'object' && !Array.isArray(value) &&
+    typeof value.lat === 'number' && typeof value.lng === 'number' &&
+    (value.city === undefined || value.city === null || typeof value.city === 'string')
+  );
+
+/**
+ * Checks one imported entry's shape against what a note is allowed to look
+ * like. Only `title` is required — everything else is optional but, if
+ * present, must be the right type — so a hand-edited or partial export still
+ * imports as long as the fields it does have make sense.
+ */
+function validateNoteShape(raw, index) {
+  const label = `Note ${index + 1}`;
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return [`${label} is not a note object.`];
+  }
+
+  const errors = [];
+  if (typeof raw.title !== 'string' || !raw.title.trim()) {
+    errors.push(`${label} is missing a title.`);
+  }
+  if (raw.content !== undefined && typeof raw.content !== 'string') {
+    errors.push(`${label} has a non-text "content" field.`);
+  }
+  if (raw.tags !== undefined && !Array.isArray(raw.tags) && typeof raw.tags !== 'string') {
+    errors.push(`${label} has an invalid "tags" field.`);
+  }
+  if (raw.archived !== undefined && typeof raw.archived !== 'boolean') {
+    errors.push(`${label} has a non-boolean "archived" field.`);
+  }
+  if (raw.createdAt !== undefined && !isValidDateString(raw.createdAt)) {
+    errors.push(`${label} has an invalid "createdAt" date.`);
+  }
+  if (raw.updatedAt !== undefined && !isValidDateString(raw.updatedAt)) {
+    errors.push(`${label} has an invalid "updatedAt" date.`);
+  }
+  if (!isValidLocation(raw.location)) {
+    errors.push(`${label} has an invalid "location" field.`);
+  }
+  return errors;
+}
+
+/**
+ * Validates the parsed contents of an imported JSON file before anything is
+ * written to storage. Returns the subset of entries that are safe to import
+ * alongside every validation error found, so the caller can report exactly
+ * what was skipped and why instead of silently dropping bad data.
+ */
+export const validateImportedNotes = (rawNotes) => {
+  if (!Array.isArray(rawNotes)) {
+    return { validNotes: [], errors: ['The file must contain a JSON array of notes.'] };
+  }
+
+  const validNotes = [];
+  const errors = [];
+  rawNotes.forEach((raw, index) => {
+    const entryErrors = validateNoteShape(raw, index);
+    if (entryErrors.length === 0) validNotes.push(raw);
+    else errors.push(...entryErrors);
+  });
+  return { validNotes, errors };
+};
+
 /**
  * Adds notes parsed from an imported JSON file to the existing collection
- * (rather than replacing it). Each entry gets a fresh id/order so imported
- * notes can never collide with — or overwrite — what's already saved.
- * Entries without a usable title are skipped. Returns how many were added.
+ * (rather than replacing it), after validating their structure. Each entry
+ * gets a fresh id/order so imported notes can never collide with — or
+ * overwrite — what's already saved. Throws only when the file itself isn't
+ * a JSON array; per-entry problems are reported, not thrown.
  */
 export const importNotes = (rawNotes) => {
+  const { validNotes, errors } = validateImportedNotes(rawNotes);
   if (!Array.isArray(rawNotes)) {
-    throw new Error('That file doesn\'t contain a list of notes.');
+    throw new Error(errors[0]);
   }
 
   let nextOrder = notes.reduce((max, n) => Math.max(max, n.order ?? 0), 0) + 1;
-  const imported = rawNotes.reduce((acc, raw) => {
-    const title = String(raw?.title || '').trim();
-    if (!title) return acc;
-    const note = new Note(title, raw.content, raw.tags);
+  const imported = validNotes.map((raw) => {
+    const note = new Note(raw.title, raw.content, raw.tags);
     note.archived = Boolean(raw.archived);
     if (raw.createdAt) note.createdAt = raw.createdAt;
     if (raw.updatedAt) note.updatedAt = raw.updatedAt;
     if (raw.location) note.location = raw.location;
     note.order = nextOrder++;
-    acc.push(note);
-    return acc;
-  }, []);
+    return note;
+  });
 
   notes = [...notes, ...imported];
   storage.saveNotes(notes);
-  return imported.length;
+  return { importedCount: imported.length, skippedCount: errors.length, errors };
 };
 
 export const searchNotes = (query, list = notes) => {
