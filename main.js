@@ -908,10 +908,25 @@ function initNotesApp() {
   mobileArchiveBtn.addEventListener('click', archiveSelectedNote);
   mobileDeleteBtn.addEventListener('click', deleteSelectedNote);
 
+  const shareCopyBtnDefaultLabel = shareCopyBtn.innerHTML;
+  let copyResetTimeout = null;
+
+  function resetCopyButton() {
+    clearTimeout(copyResetTimeout);
+    shareCopyBtn.innerHTML = shareCopyBtnDefaultLabel;
+  }
+
+  function flashCopied() {
+    clearTimeout(copyResetTimeout);
+    shareCopyBtn.innerHTML = '<svg aria-hidden="true"><use href="#icon-check" /></svg> Copied!';
+    copyResetTimeout = setTimeout(resetCopyButton, 1500);
+  }
+
   function openShareModal() {
     if (!state.selectedId) return;
     const note = noteManager.getNotes().find((n) => n.id === state.selectedId);
     if (!note) return;
+    resetCopyButton();
     shareLinkInput.value = sharing.buildShareLink(note);
     shareModal.showModal();
     shareLinkInput.focus();
@@ -922,11 +937,28 @@ function initNotesApp() {
   mobileShareBtn.addEventListener('click', openShareModal);
   shareCloseBtn.addEventListener('click', () => shareModal.close());
 
-  shareCopyBtn.addEventListener('click', async () => {
+  /** Clipboard API needs a secure context (https/localhost); execCommand still
+   * works in most desktop browsers over plain http, so it's worth a try before
+   * falling back to "select it yourself". */
+  async function copyShareLink() {
     try {
       await navigator.clipboard.writeText(shareLinkInput.value);
-      ui.showFeedback('Share link copied to clipboard!');
+      return true;
     } catch {
+      shareLinkInput.select();
+      try {
+        return document.execCommand('copy');
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  shareCopyBtn.addEventListener('click', async () => {
+    if (await copyShareLink()) {
+      flashCopied();
+      ui.showFeedback('Share link copied to clipboard!');
+    } else {
       shareLinkInput.select();
       ui.showFeedback("Couldn't copy automatically — the link is selected, so press Ctrl+C.", { type: 'error' });
     }
