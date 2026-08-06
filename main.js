@@ -911,20 +911,24 @@ function initNotesApp() {
 
     try {
       const parsed = JSON.parse(await file.text());
-      const { importedCount, skippedCount } = noteManager.importNotes(parsed);
+      const { importedCount, skippedCount, duplicateCount } = noteManager.importNotes(parsed);
 
       if (importedCount === 0) {
-        ui.showFeedback(
-          skippedCount > 0 ? "None of the entries in that file were valid notes." : 'That file has no notes to import.',
-          { type: 'error' }
-        );
+        let notice = 'That file has no notes to import.';
+        if (duplicateCount > 0 && skippedCount > 0) notice = 'No new notes — every entry was either a duplicate or invalid.';
+        else if (duplicateCount > 0) notice = 'No new notes — all of them already exist.';
+        else if (skippedCount > 0) notice = 'None of the entries in that file were valid notes.';
+        ui.showFeedback(notice, { type: 'error' });
         return;
       }
 
-      const message = skippedCount > 0
-        ? `Imported ${importedCount} note${importedCount === 1 ? '' : 's'} — skipped ${skippedCount} invalid ${skippedCount === 1 ? 'entry' : 'entries'}.`
-        : `Imported ${importedCount} note${importedCount === 1 ? '' : 's'} successfully!`;
-      ui.showFeedback(message, skippedCount > 0 ? { duration: 6000 } : undefined);
+      const caveats = [];
+      if (duplicateCount > 0) caveats.push(`skipped ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'}`);
+      if (skippedCount > 0) caveats.push(`skipped ${skippedCount} invalid ${skippedCount === 1 ? 'entry' : 'entries'}`);
+
+      const message = `Imported ${importedCount} note${importedCount === 1 ? '' : 's'}` +
+        (caveats.length ? ` — ${caveats.join(', ')}.` : ' successfully!');
+      ui.showFeedback(message, caveats.length ? { duration: 6000 } : undefined);
       render();
     } catch (err) {
       ui.showFeedback(

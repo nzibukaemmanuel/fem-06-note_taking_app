@@ -271,12 +271,17 @@ export const validateImportedNotes = (rawNotes) => {
   return { validNotes, errors };
 };
 
+/** Same note, re-imported: matches by id, or by title+content when the id is missing/unfamiliar. */
+const dupeKey = (title, content) => `${title.trim().toLowerCase()}|${(content || '').trim().toLowerCase()}`;
+
 /**
  * Adds notes parsed from an imported JSON file to the existing collection
  * (rather than replacing it), after validating their structure. Each entry
  * gets a fresh id/order so imported notes can never collide with — or
- * overwrite — what's already saved. Throws only when the file itself isn't
- * a JSON array; per-entry problems are reported, not thrown.
+ * overwrite — what's already saved. Entries that match an existing note (by
+ * id, or by title+content) are skipped as duplicates, as are repeats within
+ * the same file. Throws only when the file itself isn't a JSON array;
+ * per-entry problems are reported, not thrown.
  */
 export const importNotes = (rawNotes) => {
   const { validNotes, errors } = validateImportedNotes(rawNotes);
@@ -284,20 +289,34 @@ export const importNotes = (rawNotes) => {
     throw new Error(errors[0]);
   }
 
+  const seenIds = new Set(notes.map((n) => n.id));
+  const seenKeys = new Set(notes.map((n) => dupeKey(n.title, n.content)));
+
   let nextOrder = notes.reduce((max, n) => Math.max(max, n.order ?? 0), 0) + 1;
-  const imported = validNotes.map((raw) => {
+  let duplicateCount = 0;
+  const imported = [];
+
+  validNotes.forEach((raw) => {
+    const key = dupeKey(raw.title, raw.content);
+    if ((raw.id && seenIds.has(raw.id)) || seenKeys.has(key)) {
+      duplicateCount += 1;
+      return;
+    }
+    if (raw.id) seenIds.add(raw.id);
+    seenKeys.add(key);
+
     const note = new Note(raw.title, raw.content, raw.tags);
     note.archived = Boolean(raw.archived);
     if (raw.createdAt) note.createdAt = raw.createdAt;
     if (raw.updatedAt) note.updatedAt = raw.updatedAt;
     if (raw.location) note.location = raw.location;
     note.order = nextOrder++;
-    return note;
+    imported.push(note);
   });
 
   notes = [...notes, ...imported];
   storage.saveNotes(notes);
-  return { importedCount: imported.length, skippedCount: errors.length, errors };
+  return { importedCount: imported.length, skippedCount: errors.length, duplicateCount, errors };
 };
 
 export const searchNotes = (query, list = notes) => {
