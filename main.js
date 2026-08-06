@@ -328,6 +328,7 @@ function initNotesApp() {
   const noteTitleInput = document.getElementById('note-title');
   const noteContentInput = document.getElementById('note-content');
   const noteTagsInput = document.getElementById('note-tags');
+  const noteFolderInput = document.getElementById('note-folder');
   const lastEditedRow = document.getElementById('last-edited-row');
   const lastEditedEl = document.getElementById('note-last-edited');
 
@@ -488,6 +489,7 @@ function initNotesApp() {
     noteTitleInput.value = note.title;
     noteContentInput.value = note.content;
     noteTagsInput.value = note.tags.join(', ');
+    noteFolderInput.value = note.folder || 'UNCATEGORIZED';
     lastEditedRow.hidden = false;
     lastEditedEl.textContent = new Date(note.updatedAt || note.createdAt).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric',
@@ -537,6 +539,7 @@ function initNotesApp() {
 
     noteForm.reset();
     noteIdInput.value = '';
+    noteFolderInput.value = 'UNCATEGORIZED';
     lastEditedRow.hidden = true;
     locationDisplay.textContent = '';
     ui.showValidationError('note-title', '');
@@ -624,9 +627,10 @@ function initNotesApp() {
     const title = noteTitleInput.value.trim();
     const content = noteContentInput.value.trim();
     const tags = noteTagsInput.value;
+    const folder = noteFolderInput.value;
 
     if (state.isCreating) {
-      const note = noteManager.createNote(title, content, tags);
+      const note = noteManager.createNote(title, content, tags, folder);
       if (state.pendingLocation) {
         noteManager.updateNote(note.id, { location: state.pendingLocation });
       }
@@ -634,7 +638,7 @@ function initNotesApp() {
       ui.showFeedback('Note saved successfully!');
       selectNote(noteManager.getNotes().find((n) => n.id === note.id));
     } else if (state.selectedId) {
-      noteManager.updateNote(state.selectedId, { title, content, tags, location: state.pendingLocation });
+      noteManager.updateNote(state.selectedId, { title, content, tags, folder, location: state.pendingLocation });
       ui.showFeedback('Note updated successfully!');
       selectNote(noteManager.getNotes().find((n) => n.id === state.selectedId));
     }
@@ -1161,6 +1165,15 @@ function initNotesApp() {
 
     themes.applySavedPreferences();
     noteManager.init();
+
+    noteFolderInput.innerHTML = '';
+    noteManager.getFolders().forEach((folder) => {
+      const option = document.createElement('option');
+      option.value = folder.name;
+      option.textContent = folder.name;
+      noteFolderInput.appendChild(option);
+    });
+
     setMobileView('list');
     render();
 

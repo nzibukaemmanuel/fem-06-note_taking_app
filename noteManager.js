@@ -13,7 +13,7 @@ export class Note {
    * @param {string} content
    * @param {string[]} tags
    */
-  constructor(title, content, tags = []) {
+  constructor(title, content, tags = [], folder = 'UNCATEGORIZED') {
     this.id = generateId();
     this.title = title.trim();
     this.content = (content || '').trim();
@@ -23,6 +23,7 @@ export class Note {
     this.updatedAt = this.createdAt;
     /** @type {NoteLocation|null} */
     this.location = null;
+    this.folder = folder || 'UNCATEGORIZED';
     // Manual sort position (lower = higher up the list) — lets drag & drop
     // reorder notes independently of their edit/creation timestamps.
     this.order = Date.now();
@@ -151,6 +152,7 @@ export const init = () => {
   notes = notes.map((n, i) => {
     const next = { ...n };
     if (typeof next.order !== 'number') { next.order = i; migrated = true; }
+    if (!next.folder) { next.folder = 'UNCATEGORIZED'; migrated = true; }
     return next;
   });
   if (migrated) storage.saveNotes(notes);
@@ -167,8 +169,8 @@ export const getAllTags = () => {
   return [...set].sort();
 };
 
-export const createNote = (title, content, tags) => {
-  const note = new Note(title, content, tags);
+export const createNote = (title, content, tags, folder) => {
+  const note = new Note(title, content, tags, folder);
   notes = [note, ...notes];
   storage.saveNotes(notes);
   return note;
@@ -252,6 +254,9 @@ function validateNoteShape(raw, index) {
   if (!isValidLocation(raw.location)) {
     errors.push(`${label} has an invalid "location" field.`);
   }
+  if (raw.folder !== undefined && typeof raw.folder !== 'string') {
+    errors.push(`${label} has a non-text "folder" field.`);
+  }
   return errors;
 }
 
@@ -310,7 +315,7 @@ export const importNotes = (rawNotes) => {
     if (raw.id) seenIds.add(raw.id);
     seenKeys.add(key);
 
-    const note = new Note(raw.title, raw.content, raw.tags);
+    const note = new Note(raw.title, raw.content, raw.tags, raw.folder);
     note.archived = Boolean(raw.archived);
     if (raw.createdAt) note.createdAt = raw.createdAt;
     if (raw.updatedAt) note.updatedAt = raw.updatedAt;
