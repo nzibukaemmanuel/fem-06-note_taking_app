@@ -16,7 +16,7 @@ export class Note {
   constructor(title, content, tags = [], folder = 'UNCATEGORIZED') {
     this.id = generateId();
     this.title = title.trim();
-    this.content = (content || '').trim();
+    this.content = sanitizeRichText((content || '').trim());
     this.tags = normalizeTags(tags);
     this.archived = false;
     this.createdAt = new Date().toISOString();
@@ -60,6 +60,37 @@ function normalizeTags(tags) {
     .map((t) => String(t).trim().toLowerCase())
     .filter(Boolean);
   return [...new Set(cleaned)];
+}
+
+// Only what the formatting toolbar can produce is allowed to survive —
+// everything else (script tags, event-handler attributes, pasted styles) is
+// stripped. This runs on every write path (create, update, import), so a
+// note's content can never carry more than these tags no matter where the
+// HTML came from.
+const ALLOWED_RICH_TEXT_TAGS = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR', 'UL', 'OL', 'LI']);
+
+function sanitizeRichText(html) {
+  if (!html) return '';
+  const container = document.createElement('div');
+  container.innerHTML = html;
+
+  const clean = (node) => {
+    [...node.childNodes].forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        clean(child);
+        if (!ALLOWED_RICH_TEXT_TAGS.has(child.tagName)) {
+          while (child.firstChild) node.insertBefore(child.firstChild, child);
+          node.removeChild(child);
+        } else {
+          [...child.attributes].forEach((attr) => child.removeAttribute(attr.name));
+        }
+      } else if (child.nodeType !== Node.TEXT_NODE) {
+        node.removeChild(child);
+      }
+    });
+  };
+  clean(container);
+  return container.innerHTML;
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +221,7 @@ export const updateNote = (id, updates) => {
       ...n,
       ...updates,
       tags: updates.tags !== undefined ? normalizeTags(updates.tags) : n.tags,
+      content: updates.content !== undefined ? sanitizeRichText(updates.content) : n.content,
       updatedAt: new Date().toISOString(),
     };
     return updated;
